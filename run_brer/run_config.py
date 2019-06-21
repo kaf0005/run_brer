@@ -248,9 +248,9 @@ one, also will def run actually recognize that I changed the phase and will foll
 
         for i in range(len(self.__names)):
 
-           	pair= sites_to_name[context.potentials[i].name]
-       	   	A = self.run_data.get('A',name=pair)
-        	data=context.potentials[i].time
+           	pair = sites_to_name[context.potentials[i].name]
+       	   	A    = self.run_data.get('A',name=pair)
+        	data = context.potentials[i].time
 
 		if data<=25000 && data>=15000:
                         pass
