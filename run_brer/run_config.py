@@ -258,43 +258,43 @@ one, also will def run actually recognize that I changed the phase and will foll
                         if data<1:
                                 A = A*0.10
                                 self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0)
+				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
                                 break
 
                         elif data<100 && data>=1:
                                 A = A*0.15
                                 self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0)
+ 				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
                                 break
 
                         elif data<1000 && data>=100:
                                 A = A*0.20
                                 self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0)
+ 				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
                                 break
 
                         elif data<10000 && data>=1000:
                                 A = A*0.25
 				self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0)
+				 self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
                                 break
 
                         elif data<12500 && data>=10000:
                                 A = A*0.75
                                 self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0)
+ 				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
                                 break
 
 			elif data<15000 && data>=12500:
                                 A = A*0.90
                                 self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0)
+				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
                                 break
 
 			else data>25000:
                                 A = A*1.3
                                 self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0)
+				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
                                 break
 
 
