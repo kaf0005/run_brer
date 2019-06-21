@@ -243,8 +243,8 @@ class RunConfig:
             session.run()
 
 """Kasey Messing around"""
-"""need to make sure that setting the phase to training doesn't cause a resample of targets, need to use the current cpt not a new one, also will def run actually
-recognize that I changed the phase and will follow its if statement accordingly"""
+"""need to make sure that setting the phase to training doesn't cause a resample of targets, need to use the current cpt not a new
+one, also will def run actually recognize that I changed the phase and will follow its if statement accordingly"""
 
         for i in range(len(self.__names)):
 
@@ -291,7 +291,7 @@ recognize that I changed the phase and will follow its if statement accordingly"
 				self.run_data.set(phase='training',start_time=0)
                                 break
 
-			else start_time>25000
+			else data>25000:
                                 A = A*1.3
                                 self.run_data.set('A'=A, name=pair)
 				self.run_data.set(phase='training',start_time=0)
