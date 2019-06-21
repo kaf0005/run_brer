@@ -15,7 +15,7 @@ class RunConfig:
 
 
     def __init__(self,
-		 A_parameter,
+		 A_parameter=1,
                  tpr,
                  ensemble_dir,
                  ensemble_num=1,
@@ -32,7 +32,7 @@ class RunConfig:
 
         :
         """
-	self.A_parameter=1
+
         self.tpr = tpr
         self.ens_dir = ensemble_dir
 
@@ -63,7 +63,7 @@ class RunConfig:
                 self.run_data.from_pair_data(pd)
             self.run_data.save_config(self.state_json)
 
-        # List of plugins
+                # List of plugins
         self.__plugins = []
 
         # Logging
@@ -105,7 +105,7 @@ class RunConfig:
         Parameters
         ----------
         plugin_config :
-
+    
 
         Returns
         -------
@@ -172,68 +172,67 @@ class RunConfig:
 
     def __train(self):
 
-	if A_parameter==0:
-		cpt='{}/state.cpt'.format(os.getcwd())
-	else:
-        	# do re-sampling
-        	targets = self.pairs.re_sample()
-        	self._logger.info('New targets: {}'.format(targets))
-        	for name in self.__names:
-            		self.run_data.set(name=name, target=targets[name])
+            if  A_parameter==0:
+                        cpt='{}/state.cpt'.format(os.getcwd())
+            else:
+                        # do re-sampling
+                        targets = self.pairs.re_sample()
+                        self._logger.info('New targets: {}'.format(targets))
+                        for name in self.__names:
+                                    self.run_data.set(name=name, target=targets[name])
 
-        	# save the new targets to the BRER checkpoint file.
-        	self.run_data.save_config(fnm=self.state_json)
+                        #save the new targets to the BRER checkpoint file.
+                        self.run_data.save_config(fnm=self.state_json)
 
-        	# backup existing checkpoint.
-        	# TODO: Don't backup the cpt, actually use it!!
-        	cpt = '{}/state.cpt'.format(os.getcwd())
-       		if os.path.exists(cpt):
-            		self._logger.warning(
-                		'There is a checkpoint file in your current working directory, but you are '
-                		'training. The cpt will be backed up and the run will start over with new targets'
-            		)
-            	shutil.move(cpt, '{}.bak'.format(cpt))
-
+                        # backup existing checkpoint.
+                        # TODO: Don't backup the cpt, actually use it!!
+                        cpt = '{}/state.cpt'.format(os.getcwd())
+                        if os.path.exists(cpt):
+                                    self._logger.warning(
+                                                'There is a checkpoint file in your current working directory, but you are '
+                                                'training. The cpt will be backed up and the run will start over with new targets'
+                                    )
+                        shutil.move(cpt, '{}.bak'.format(cpt))
 
         # If this is not the first BRER iteration, grab the checkpoint from the production
         # phase of the last round
-        self.__move_cpt()
+            self.__move_cpt()
 
         # Set up a dictionary to go from plugin name -> restraint name
-        sites_to_name = {}
+            sites_to_name = {}
 
         # Build the gmxapi session.
-        md = gmx.workflow.from_tpr(self.tpr, append_output=False)
-        self.build_plugins(TrainingPluginConfig())
-        for plugin in self.__plugins:
-            plugin_name = plugin.name
-            for name in self.__names:
-                run_data_sites = "{}".format(
-                    self.run_data.get('sites', name=name))
-                if run_data_sites == plugin_name:
-                    sites_to_name[plugin_name] = name
-            md.add_dependency(plugin)
-        context = gmx.context.ParallelArrayContext(
-            md, workdir_list=[os.getcwd()])
+            md = gmx.workflow.from_tpr(self.tpr, append_output=False)
+            self.build_plugins(TrainingPluginConfig())
+            for plugin in self.__plugins:
+                plugin_name = plugin.name
+                for name in self.__names:
+                    run_data_sites = "{}".format(
+                        self.run_data.get('sites', name=name))
+                    if run_data_sites == plugin_name:
+                                sites_to_name[plugin_name] = name
+                md.add_dependency(plugin)
+            context = gmx.context.ParallelArrayContext(
+                md, workdir_list=[os.getcwd()])
 
         # Run it.
-        with context as session:
-            session.run()
+            with context as session:
+                session.run()
 
         # In the future runs (convergence, production) we need the ABSOLUTE VALUE of alpha.
-        self._logger.info("=====TRAINING INFO======\n")
+            self._logger.info("=====TRAINING INFO======\n")
 
-        for i in range(len(self.__names)):
-            current_name = sites_to_name[context.potentials[i].name]
-            current_alpha = context.potentials[i].alpha
-            current_target = context.potentials[i].target
+            for i in range(len(self.__names)):
+                current_name = sites_to_name[context.potentials[i].name]
+                current_alpha = context.potentials[i].alpha
+                current_target = context.potentials[i].target
 
-            self.run_data.set(name=current_name, alpha=current_alpha)
-            self.run_data.set(name=current_name, target=current_target)
-            self._logger.info("Plugin {}: alpha = {}, target = {}".format(
-                current_name,
-                current_alpha,
-                current_target)
+                self.run_data.set(name=current_name, alpha=current_alpha)
+                self.run_data.set(name=current_name, target=current_target)
+                self._logger.info("Plugin {}: alpha = {}, target = {}".format(
+                    current_name,
+                    current_alpha,
+                    current_target)
             )
 
     def __converge(self):
@@ -252,7 +251,7 @@ class RunConfig:
 	# Get the absolute time (in ps) at which the convergence run finished.
         # This value will be needed if a production run needs to be restarted.
 
- self.run_data.set(start_time=context.potentials[0].time)
+        self.run_data.set(start_time=context.potentials[0].time)
 
 
         self._logger.info("=====CONVERGENCE INFO======\n")
@@ -261,7 +260,7 @@ class RunConfig:
             current_target = self.run_data.get('target', name=name)
             self._logger.info("Plugin {}: alpha = {}, target = {}".format(
                 name,
-                current_alpha,
+                    current_alpha,
                 current_target)
             )
 
@@ -311,51 +310,50 @@ class RunConfig:
             self.__converge()
 
 """Kasey Messing around"""
-	 for i in range(len(self.__names)):
-
+            for i in range(len(self.__names)):
                 pair = sites_to_name[context.potentials[i].name]
                 A    = self.run_data.get('A',name=pair)
                 data = context.potentials[i].time
 
-                if data<=25000 && data>=15000:
-			self.A_parameter = 1
-                        self.run_data.set(phase='production')
-
+                if data<=25000 and data>=15000:
+                    self.A_parameter = 1
+                    self.run_data.set(phase='production')
                 else
-			self.A_parameter = 0
+                    self.A_parameter = 0
 
-                        if data<1:
-                                A = A*0.10
-                                self.run_data.set('A'=A, name=pair)
-                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                    if data<1:
+                        A = A*0.10
+                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                        elif data<100 and data>=1:
-                                A = A*0.15
-                                self.run_data.set('A'=A, name=pair)
-                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                    elif data<100 and data>=1:
+                        A = A*0.15
+                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                        elif data<1000 and data>=100:
-                                A = A*0.20
-                                self.run_data.set('A'=A, name=pair)
-                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                    elif data<1000 and data>=100:
+                        A = A*0.20
+                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                        elif data<10000 and data>=1000:
-                                A = A*0.25
-                                self.run_data.set('A'=A, name=pair)
-                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                    elif data<10000 and data>=1000:
+                        A = A*0.25
+                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                        elif data<12500 and data>=10000:
-                                A = A*0.75
-                                self.run_data.set('A'=A, name=pair)
-                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                    elif data<12500 and data>=10000:
+                        A = A*0.75
+                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                        elif data<15000 and data>=12500:
-                                A = A*0.90
-
-			else: """data>25000:"""
-                                A = A*1.3
-                                self.run_data.set('A'=A, name=pair)
-                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                    elif data<15000 and data>=12500:
+                        A = A*0.90
+                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                    else: """data>25000:"""
+                        A = A*1.3
+                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
 
 """Kasey stops messing around"""
