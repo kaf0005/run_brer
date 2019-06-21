@@ -320,7 +320,7 @@ class RunConfig:
                         self.run_data.set(phase='production')
 
                 else
-			A_paramter = 0
+			A_parameter = 0
 
                         if data<1:
                                 A = A*0.10
