@@ -285,7 +285,7 @@ one, also will def run actually recognize that I changed the phase and will foll
 				self.run_data.set(phase='training',start_time=0)
                                 break
 
-			 elif data<15000 && data>=12500:
+			elif data<15000 && data>=12500:
                                 A = A*0.90
                                 self.run_data.set('A'=A, name=pair)
 				self.run_data.set(phase='training',start_time=0)
