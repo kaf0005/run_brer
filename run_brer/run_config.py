@@ -15,6 +15,7 @@ class RunConfig:
 
 
     def __init__(self,
+		 A_parameter,
                  tpr,
                  ensemble_dir,
                  ensemble_num=1,
@@ -31,6 +32,7 @@ class RunConfig:
 
         :
         """
+	self.A_parameter=1
         self.tpr = tpr
         self.ens_dir = ensemble_dir
 
@@ -316,38 +318,38 @@ class RunConfig:
                 data = context.potentials[i].time
 
                 if data<=25000 && data>=15000:
-			A_parameter = 1
+			self.A_parameter = 1
                         self.run_data.set(phase='production')
 
                 else
-			A_parameter = 0
+			self.A_parameter = 0
 
                         if data<1:
                                 A = A*0.10
                                 self.run_data.set('A'=A, name=pair)
                                 self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                        elif data<100 && data>=1:
+                        elif data<100 and data>=1:
                                 A = A*0.15
                                 self.run_data.set('A'=A, name=pair)
                                 self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                        elif data<1000 && data>=100:
+                        elif data<1000 and data>=100:
                                 A = A*0.20
                                 self.run_data.set('A'=A, name=pair)
                                 self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                        elif data<10000 && data>=1000:
+                        elif data<10000 and data>=1000:
                                 A = A*0.25
                                 self.run_data.set('A'=A, name=pair)
                                 self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                        elif data<12500 && data>=10000:
+                        elif data<12500 and data>=10000:
                                 A = A*0.75
                                 self.run_data.set('A'=A, name=pair)
                                 self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                        elif data<15000 && data>=12500:
+                        elif data<15000 and data>=12500:
                                 A = A*0.90
 
 			else: """data>25000:"""
