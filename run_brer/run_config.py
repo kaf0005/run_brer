@@ -13,6 +13,7 @@ import atexit
 class RunConfig:
     """Run configuration for single BRER ensemble member."""
 
+
     def __init__(self,
                  tpr,
                  ensemble_dir,
@@ -169,24 +170,28 @@ class RunConfig:
 
     def __train(self):
 
-        # do re-sampling
-        targets = self.pairs.re_sample()
-        self._logger.info('New targets: {}'.format(targets))
-        for name in self.__names:
-            self.run_data.set(name=name, target=targets[name])
+	if A_parameter==0:
+		cpt='{}/state.cpt'.format(os.getcwd())
+	else:
+        	# do re-sampling
+        	targets = self.pairs.re_sample()
+        	self._logger.info('New targets: {}'.format(targets))
+        	for name in self.__names:
+            	self.run_data.set(name=name, target=targets[name])
 
-        # save the new targets to the BRER checkpoint file.
-        self.run_data.save_config(fnm=self.state_json)
+        	# save the new targets to the BRER checkpoint file.
+        	self.run_data.save_config(fnm=self.state_json)
 
-        # backup existing checkpoint.
-        # TODO: Don't backup the cpt, actually use it!!
-        cpt = '{}/state.cpt'.format(os.getcwd())
-        if os.path.exists(cpt):
-            self._logger.warning(
-                'There is a checkpoint file in your current working directory, but you are '
-                'training. The cpt will be backed up and the run will start over with new targets'
-            )
-            shutil.move(cpt, '{}.bak'.format(cpt))
+        	# backup existing checkpoint.
+        	# TODO: Don't backup the cpt, actually use it!!
+        	cpt = '{}/state.cpt'.format(os.getcwd())
+       		if os.path.exists(cpt):
+            		self._logger.warning(
+                		'There is a checkpoint file in your current working directory, but you are '
+                		'training. The cpt will be backed up and the run will start over with new targets'
+            		)
+            	shutil.move(cpt, '{}.bak'.format(cpt))
+
 
         # If this is not the first BRER iteration, grab the checkpoint from the production
         # phase of the last round
@@ -242,57 +247,6 @@ class RunConfig:
         with context as session:
             session.run()
 
-"""Kasey Messing around"""
-"""need to make sure that setting the phase to training doesn't cause a resample of targets, need to use the current cpt not a new
-one, also will def run actually recognize that I changed the phase and will follow its if statement accordingly"""
-
-        for i in range(len(self.__names)):
-
-           	pair = sites_to_name[context.potentials[i].name]
-       	   	A    = self.run_data.get('A',name=pair)
-        	data = context.potentials[i].time
-
-		if data<=25000 && data>=15000:
-                        pass
-                else
-                        if data<1:
-                                A = A*0.10
-                                self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
-
-                        elif data<100 && data>=1:
-                                A = A*0.15
-                                self.run_data.set('A'=A, name=pair)
- 				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
-
-                        elif data<1000 && data>=100:
-                                A = A*0.20
-                                self.run_data.set('A'=A, name=pair)
- 				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
-
-                        elif data<10000 && data>=1000:
-                                A = A*0.25
-				self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
-
-                        elif data<12500 && data>=10000:
-                                A = A*0.75
-                                self.run_data.set('A'=A, name=pair)
- 				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
-
-			elif data<15000 && data>=12500:
-                                A = A*0.90
-                                self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
-
-			else: """data>25000:"""
-                                A = A*1.3
-                                self.run_data.set('A'=A, name=pair)
-				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
-
-
-"""Kasey stops messing around"""
-
 	# Get the absolute time (in ps) at which the convergence run finished.
         # This value will be needed if a production run needs to be restarted.
 
@@ -342,7 +296,7 @@ one, also will def run actually recognize that I changed the phase and will foll
             )
 
     def run(self):
-        """ """
+
         phase = self.run_data.get('phase')
 
         self.__change_directory()
@@ -350,9 +304,59 @@ one, also will def run actually recognize that I changed the phase and will foll
         if phase == 'training':
             self.__train()
             self.run_data.set(phase='convergence')
+
         elif phase == 'convergence':
             self.__converge()
-            self.run_data.set(phase='production')
+
+"""Kasey Messing around"""
+	 for i in range(len(self.__names)):
+
+                pair = sites_to_name[context.potentials[i].name]
+                A    = self.run_data.get('A',name=pair)
+                data = context.potentials[i].time
+
+                if data<=25000 && data>=15000:
+			A_parameter = 1
+                        self.run_data.set(phase='production')
+
+                else
+			A_paramter = 0
+
+                        if data<1:
+                                A = A*0.10
+                                self.run_data.set('A'=A, name=pair)
+                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+
+                        elif data<100 && data>=1:
+                                A = A*0.15
+                                self.run_data.set('A'=A, name=pair)
+                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+
+                        elif data<1000 && data>=100:
+                                A = A*0.20
+                                self.run_data.set('A'=A, name=pair)
+                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+
+                        elif data<10000 && data>=1000:
+                                A = A*0.25
+                                self.run_data.set('A'=A, name=pair)
+                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+
+                        elif data<12500 && data>=10000:
+                                A = A*0.75
+                                self.run_data.set('A'=A, name=pair)
+                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+
+                        elif data<15000 && data>=12500:
+                                A = A*0.90
+			                else: """data>25000:"""
+                                A = A*1.3
+                                self.run_data.set('A'=A, name=pair)
+                                self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+
+
+"""Kasey stops messing around"""
+
         else:
             self.__production()
             self.run_data.set(
