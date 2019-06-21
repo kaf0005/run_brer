@@ -177,7 +177,7 @@ class RunConfig:
         	targets = self.pairs.re_sample()
         	self._logger.info('New targets: {}'.format(targets))
         	for name in self.__names:
-            	self.run_data.set(name=name, target=targets[name])
+            		self.run_data.set(name=name, target=targets[name])
 
         	# save the new targets to the BRER checkpoint file.
         	self.run_data.save_config(fnm=self.state_json)
