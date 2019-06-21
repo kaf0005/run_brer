@@ -285,7 +285,7 @@ one, also will def run actually recognize that I changed the phase and will foll
                                 self.run_data.set('A'=A, name=pair)
 				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-			else """data>25000:"""
+			else: """data>25000:"""
                                 A = A*1.3
                                 self.run_data.set('A'=A, name=pair)
 				self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
