@@ -15,7 +15,7 @@ class RunConfig:
 
 
     def __init__(self,
-		 A_parameter=1,
+                 A_parameter=1,
                  tpr,
                  ensemble_dir,
                  ensemble_num=1,
@@ -105,7 +105,7 @@ class RunConfig:
         Parameters
         ----------
         plugin_config :
-    
+
 
         Returns
         -------
@@ -304,7 +304,7 @@ class RunConfig:
 
         if phase == 'training':
             self.__train()
-            self.run_data.set(phase='convergence')
+            self.run_data.set(phaseconvergence')
 
         elif phase == 'convergence':
             self.__converge()
@@ -350,6 +350,7 @@ class RunConfig:
                         A = A*0.90
                         self.run_data.set('A'=A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+
                     else: """data>25000:"""
                         A = A*1.3
                         self.run_data.set('A'=A, name=pair)
