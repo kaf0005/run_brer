@@ -9,7 +9,7 @@ import json
 
 class GeneralParams(MetaData):
     """Stores the parameters that are shared by all restraints in a single simulation.
-    These include some of the "Voth" parameters: tau, A, tolerance
+    These include some of the "Voth" parameters: tau, A, tolerance - Kasey is messing around with A, making is a specific parameter :)
 
     Parameters
     ----------
@@ -22,7 +22,7 @@ class GeneralParams(MetaData):
     def __init__(self):
         super().__init__('general')
         self.set_requirements([
-            'ensemble_num', 'iteration', 'phase', 'start_time', 'A', 'tau',
+            'ensemble_num', 'iteration', 'phase', 'start_time','tau',
             'tolerance', 'num_samples', 'sample_period', 'production_time'
         ])
 
@@ -32,7 +32,7 @@ class PairParams(MetaData):
 
     def __init__(self, name):
         super().__init__(name)
-        self.set_requirements(['sites', 'logging_filename', 'alpha', 'target'])
+        self.set_requirements(['sites', 'logging_filename', 'alpha', 'target','A'])
 
 
 class RunData:
@@ -49,7 +49,7 @@ class RunData:
             'iteration': 0,
             'phase': 'training',
             'start_time': 0,
-            'A': 50,
+            """'A': 50,Kasey"""
             'tau': 50,
             'tolerance': 0.25,
             'num_samples': 50,
@@ -60,6 +60,10 @@ class RunData:
         self.pair_params = {}
         self.__names = []
 
+
+
+
+
     def set(self, name=None, **kwargs):
         """method used to set either general or a pair-specific parameter.
 
@@ -67,7 +71,7 @@ class RunData:
         ----------
         name :
             restraint name. These are the same identifiers that are used in the RunConfig (Default value = None)
-        kwargs :
+w        kwargs :
             parameters and their values.
         **kwargs :
 
@@ -189,6 +193,8 @@ class RunData:
         self.pair_params[name].set('logging_filename', '{}.log'.format(name))
         self.pair_params[name].set('alpha', 0)
         self.pair_params[name].set('target', 3.0)
+""" Kasey playing around"""
+	self.pair_params[name].set('A',50)
 
     def clear_pair_data(self):
         """ """

@@ -10,7 +10,6 @@ import gmx
 import json
 import atexit
 
-
 class RunConfig:
     """Run configuration for single BRER ensemble member."""
 
@@ -243,9 +242,69 @@ class RunConfig:
         with context as session:
             session.run()
 
-        # Get the absolute time (in ps) at which the convergence run finished.
+"""Kasey Messing around"""
+"""need to make sure that setting the phase to training doesn't cause a resample of targets, need to use the current cpt not a new one, also will def run actually
+recognize that I changed the phase and will follow its if statement accordingly"""
+
+        for i in range(len(self.__names)):
+
+           	pair= sites_to_name[context.potentials[i].name]
+       	   	A = self.run_data.get('A',name=pair[i])
+        	data=context.potentials[i].time
+
+		if data<=25000 && data>=15000:
+                        pass
+                else
+                        if data<1:
+                                A = A*0.10
+                                self.run_data.set('A'=A, name=pair)
+				self.run_data.set(phase='training',start_time=0)
+                                break
+
+                        elif data<100 && data>=1:
+                                A = A*0.15
+                                self.run_data.set('A'=A, name=pair)
+				self.run_data.set(phase='training',start_time=0)
+                                break
+
+                        elif data<1000 && data>=100:
+                                A = A*0.20
+                                self.run_data.set('A'=A, name=pair)
+				self.run_data.set(phase='training',start_time=0)
+                                break
+
+                        elif data<10000 && data>=1000:
+                                A = A*0.25
+				self.run_data.set('A'=A, name=pair)
+				self.run_data.set(phase='training',start_time=0)
+                                break
+
+                        elif data<12500 && data>=10000:
+                                A = A*0.75
+                                self.run_data.set('A'=A, name=pair)
+				self.run_data.set(phase='training',start_time=0)
+                                break
+
+			 elif data<15000 && data>=12500:
+                                A = A*0.90
+                                self.run_data.set('A'=A, name=pair)
+				self.run_data.set(phase='training',start_time=0)
+                                break
+
+			else start_time>25000
+                                A = A*1.3
+                                self.run_data.set('A'=A, name=pair)
+				self.run_data.set(phase='training',start_time=0)
+                                break
+
+
+"""Kasey stops messing around"""
+
+	# Get the absolute time (in ps) at which the convergence run finished.
         # This value will be needed if a production run needs to be restarted.
-        self.run_data.set(start_time=context.potentials[0].time)
+
+ self.run_data.set(start_time=context.potentials[0].time)
+
 
         self._logger.info("=====CONVERGENCE INFO======\n")
         for name in self.__names:

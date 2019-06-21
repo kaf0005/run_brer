@@ -17,6 +17,8 @@ init = {
 
 config = rc.RunConfig(**init)
 
-config.run_data.set(A=100)
+"""config.run_data.set(A=100, name='196_228')"""
 
 config.run()
+
+"""self.pair_params[name].set('A',50)"""
