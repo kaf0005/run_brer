@@ -323,27 +323,27 @@ class RunConfig:
 
                     if data<1:
                         A = A*0.10
-                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(A =A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
                     elif data<100 and data>=1:
                         A = A*0.15
-                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(A = A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
                     elif data<1000 and data>=100:
                         A = A*0.20
-                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(A = A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
                     elif data<10000 and data>=1000:
                         A = A*0.25
-                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(A = A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
                     elif data<12500 and data>=10000:
                         A = A*0.75
-                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(A = A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
                     elif data<15000 and data>=12500:
