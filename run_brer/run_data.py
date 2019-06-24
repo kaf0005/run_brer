@@ -193,8 +193,7 @@ w        kwargs :
         self.pair_params[name].set('logging_filename', '{}.log'.format(name))
         self.pair_params[name].set('alpha', 0)
         self.pair_params[name].set('target', 3.0)
-""" Kasey playing around"""
-	self.pair_params[name].set('A',50)
+        self.pair_params[name].set('A',50)
 
     def clear_pair_data(self):
         """ """
