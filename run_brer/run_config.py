@@ -1,3 +1,4 @@
+from run_brer.run_data import RunData
 from run_brer.pair_data import MultiPair
 from run_brer.plugin_configs import TrainingPluginConfig, ConvergencePluginConfig, ProductionPluginConfig
 from run_brer.directory_helper import DirectoryHelper
