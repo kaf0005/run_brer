@@ -180,10 +180,15 @@ class RunConfig:
                 shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
 
     def __train(self):
-
-        #do re-sampling
-        targets = self.pairs.re_sample()
-        self._logger.info('New targets: {}'.format(targets))
+        if self.A_parameter==0:
+             gmx_cpt = '{}/{}/training/state.cpt'.format(
+                    member_dir, current_iter)
+                shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
+        else:
+            #do re-sampling
+            targets = self.pairs.re_sample()
+            self._logger.info('New targets: {}'.format(targets))
+        
         for name in self.__names:
             self.run_data.set(name=name, target=targets[name])
 
@@ -198,10 +203,7 @@ class RunConfig:
             'There is a checkpoint file in your current working directory, but you are '
             'training. The cpt will be backed up and the run will start over with new targets'
             )
-            if self.A_parameter==0:
-                pass
-            else:
-                shutil.move(cpt, '{}.bak'.format(cpt))
+            shutil.move(cpt, '{}.bak'.format(cpt))
 
 
         # If this is not the first BRER iteration, grab the checkpoint from the production
@@ -247,10 +249,7 @@ class RunConfig:
             )
 
     def __converge(self):
-        if self.A_parameter==0:
-            pass
-        else:
-            self.__move_cpt()
+        self.__move_cpt()
 
         md = gmx.workflow.from_tpr(self.tpr, append_output=False)
         self.build_plugins(ConvergencePluginConfig())
@@ -334,45 +333,66 @@ class RunConfig:
 
                 if data[i]<=25000 and data[i]>=15000:
                     self.A_parameter = 1
-                    self.run_data.set(phase='production')
+
                 else:
                     self.A_parameter = 0
 
                     if data[i]<1:
                         B = A1[i]*0.10
                         self.run_data.set(A =B, name=pair[i])
-                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                        self.run_data.set(
+                            phase='training',
+                            start_time=0, 
+                            iteration=self.run_data.get('iteration'))
 
                     elif data[i]<100 and data[i]>=1:
                         B = A1[i]*0.15
                         self.run_data.set(A = B, name=pair[i])
-                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                        self.run_data.set(
+                            phase='training',
+                            start_time=0, 
+                            iteration=self.run_data.get('iteration'))
 
                     elif data[i]<1000 and data[i]>=100:
                         B = A1[i]*0.20
                         self.run_data.set(A = B, name=pair[i])
-                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                        self.run_data.set(
+                            phase='training',
+                            start_time=0,
+                            iteration=self.run_data.get('iteration'))
 
                     elif data[i]<10000 and data[i]>=1000:
                         B = A1[i]*0.25
                         self.run_data.set(A = B, name=pair[i])
-                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                        self.run_data.set(
+                            phase='training',
+                            start_time=0, 
+                            iteration=self.run_data.get('iteration'))
 
                     elif data[i]<12500 and data[i]>=10000:
                         B = A1[i]*0.75
                         self.run_data.set(A = B, name=pair[i])
-                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                        self.run_data.set(
+                            phase='training',
+                            start_time=0, 
+                            iteration=self.run_data.get('iteration'))
 
                     elif data[i]<15000 and data[i]>=12500:
                         B = A1[i]*0.90
                         self.run_data.set(A = B, name=pair[i])
-                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
+                        self.run_data.set(
+                            phase='training',
+                            start_time=0,
+                            iteration=self.run_data.get('iteration'))
 
                     else: ##data>25000:##
                         B = A1[i]*1.3
                         self.run_data.set(A= B, name=pair[i])
-                        self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
-
+                        self.run_data.set(
+                            phase='training',
+                            start_time=0, 
+                            iteration=self.run_data.get('iteration'))
+            self.run_data.set(phase='production')
 
         else:
             self.__production()
