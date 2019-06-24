@@ -15,11 +15,11 @@ class RunConfig:
 
 
     def __init__(self, 
-                A_parameter=1,
                 tpr,
                 ensemble_dir,
                 ensemble_num=1,
-                pairs_json='pair_data.json'):
+                pairs_json='pair_data.json',
+                A_parameter=1):
         """
         The run configuration specifies the files and directory structure used for the run.
         It determines whether the run is in the training, convergence, or production phase,
@@ -351,9 +351,9 @@ class RunConfig:
                         self.run_data.set('A'=A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                    elif data>25000:
+                    else: ##data>25000:##
                         A = A*1.3
-                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set('A'= A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
 
