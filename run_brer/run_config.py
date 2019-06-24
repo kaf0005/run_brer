@@ -265,9 +265,9 @@ class RunConfig:
 
         self.run_data.set(start_time=context.potentials[0].time)
         for i in range(len(self.__names)):
-                    self.pair = context.potentials[i].name
-                    self.A1    = self.run_data.get('A',name=self.pair[i])
-                    self.data = context.potentials[i].time
+            self.pair = context.potentials[i].name
+            self.A1    = self.run_data.get('A',name=self.pair[i])
+            self.data = context.potentials[i].time
 
 
         self._logger.info("=====CONVERGENCE INFO======\n")
