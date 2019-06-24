@@ -181,9 +181,15 @@ class RunConfig:
 
     def __train(self):
         if self.A_parameter==0:
+            current_iter = self.run_data.get('iteration')
+            ens_num = self.run_data.get('ensemble_num')
+            
+            member_dir = '{}/mem_{}'.format(self.ens_dir, ens_num)
+            
             gmx_cpt = '{}/{}/training/state.cpt'.format(
                     member_dir, current_iter)
             shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
+ 
         else:
             #do re-sampling
             targets = self.pairs.re_sample()
@@ -266,70 +272,9 @@ class RunConfig:
         self.run_data.set(start_time=context.potentials[0].time)
 
         for i in range(len(self.__names)):
-            self.A1    = self.run_data.get('A',name=self.pair[i])
-            self.data = context.potentials[0].time
-        
-
-
-        self._logger.info("=====CONVERGENCE INFO======\n")
-        for name in self.__names:
-            current_alpha = self.run_data.get('alpha', name=name)
-            current_target = self.run_data.get('target', name=name)
-            self._logger.info("Plugin {}: alpha = {}, target = {}".format(
-                name,
-                current_alpha,
-                current_target)
-            )
-
-    def __production(self):
-
-        # Get the checkpoint file from the convergence phase
-        self.__move_cpt()
-
-        # Calculate the time (in ps) at which the BRER iteration should finish.
-        # This should be: the end time of the convergence run + the amount of time for
-        # production simulation (specified by the user).
-        end_time = self.run_data.get('production_time') + self.run_data.get(
-            'start_time')
-
-        md = gmx.workflow.from_tpr(
-            self.tpr, end_time=end_time, append_output=False)
-
-        self.build_plugins(ProductionPluginConfig())
-        for plugin in self.__plugins:
-            md.add_dependency(plugin)
-        context = gmx.context.ParallelArrayContext(
-            md, workdir_list=[os.getcwd()])
-        with context as session:
-            session.run()
-
-        self._logger.info("=====PRODUCTION INFO======\n")
-        for name in self.__names:
-            current_alpha = self.run_data.get('alpha', name=name)
-            current_target = self.run_data.get('target', name=name)
-            self._logger.info("Plugin {}: alpha = {}, target = {}".format(
-                name,
-                current_alpha,
-                current_target)
-            )
-
-    def run(self):
-
-        phase = self.run_data.get('phase')
-
-        self.__change_directory()
-
-        if phase == 'training':
-            self.__train()
-            self.run_data.set(phase='convergence')
-
-        elif phase == 'convergence':
-            self.__converge()
-
-            for i in range(len(self.__names)):
-                data=self.data
-                pair=self.pair
-                A1=self.run_data.get('A',name=pair[i])
+            pair = self.pair
+            A1 = self.run_data.get(A,name=pair[i])
+            data = self.run_data.get(start_time, name=pair[i])
 
                 if data[i]<=25000 and data[i]>=15000:
                     self.A_parameter = 1
@@ -394,6 +339,64 @@ class RunConfig:
                             iteration=self.run_data.get('iteration'))
             self.run_data.set(phase='production')
 
+
+        self._logger.info("=====CONVERGENCE INFO======\n")
+        for name in self.__names:
+            current_alpha = self.run_data.get('alpha', name=name)
+            current_target = self.run_data.get('target', name=name)
+            self._logger.info("Plugin {}: alpha = {}, target = {}".format(
+                name,
+                current_alpha,
+                current_target)
+            )
+
+    def __production(self):
+
+        # Get the checkpoint file from the convergence phase
+        self.__move_cpt()
+
+        # Calculate the time (in ps) at which the BRER iteration should finish.
+        # This should be: the end time of the convergence run + the amount of time for
+        # production simulation (specified by the user).
+        end_time = self.run_data.get('production_time') + self.run_data.get(
+            'start_time')
+
+        md = gmx.workflow.from_tpr(
+            self.tpr, end_time=end_time, append_output=False)
+
+        self.build_plugins(ProductionPluginConfig())
+        for plugin in self.__plugins:
+            md.add_dependency(plugin)
+        context = gmx.context.ParallelArrayContext(
+            md, workdir_list=[os.getcwd()])
+        with context as session:
+            session.run()
+
+        self._logger.info("=====PRODUCTION INFO======\n")
+        for name in self.__names:
+            current_alpha = self.run_data.get('alpha', name=name)
+            current_target = self.run_data.get('target', name=name)
+            self._logger.info("Plugin {}: alpha = {}, target = {}".format(
+                name,
+                current_alpha,
+                current_target)
+            )
+
+    def run(self):
+
+        phase = self.run_data.get('phase')
+
+        self.__change_directory()
+
+        if phase == 'training':
+            self.__train()
+            self.run_data.set(phase='convergence')
+
+        elif phase == 'convergence':
+            self.__converge()
+
+            for i in range(len(self.__names)):
+                data=self.data
         else:
             self.__production()
             self.run_data.set(
