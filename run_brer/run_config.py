@@ -41,7 +41,7 @@ class RunConfig:
         self.ens_dir = ensemble_dir
         self.pair = pair
         self.data = data
-        self.A1=A1
+        self.A1=run_data.get('A',name=name)
         self.A_parameter = 1
 
 
