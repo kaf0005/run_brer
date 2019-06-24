@@ -181,28 +181,27 @@ class RunConfig:
 
     def __train(self):
 
-            if  self.A_parameter==0:
-                        cpt='{}/state.cpt'.format(os.getcwd())
+            if  self.A_parameter==1:
+                #do re-sampling
+                targets = self.pairs.re_sample()
+                self._logger.info('New targets: {}'.format(targets))
+                for name in self.__names:
+                    self.run_data.set(name=name, target=targets[name])
+
+                #save the new targets to the BRER checkpoint file.
+                self.run_data.save_config(fnm=self.state_json)
+
+                # backup existing checkpoint.
+                # TODO: Don't backup the cpt, actually use it!!
+                cpt = '{}/state.cpt'.format(os.getcwd())
+                if os.path.exists(cpt):
+                    self._logger.warning(
+                       'There is a checkpoint file in your current working directory, but you are '
+                       'training. The cpt will be backed up and the run will start over with new targets'
+                    )        
+                    shutil.move(cpt, '{}.bak'.format(cpt))
             else:
-                        # do re-sampling
-                        targets = self.pairs.re_sample()
-                        self._logger.info('New targets: {}'.format(targets))
-                        for name in self.__names:
-                                    self.run_data.set(name=name, target=targets[name])
-
-                        #save the new targets to the BRER checkpoint file.
-                        self.run_data.save_config(fnm=self.state_json)
-
-                        # backup existing checkpoint.
-                        # TODO: Don't backup the cpt, actually use it!!
-                        cpt = '{}/state.cpt'.format(os.getcwd())
-                        if os.path.exists(cpt):
-                                    self._logger.warning(
-                                                'There is a checkpoint file in your current working directory, but you are '
-                                                'training. The cpt will be backed up and the run will start over with new targets'
-                                    )
-                        shutil.move(cpt, '{}.bak'.format(cpt))
-
+                cpt='{}/state.cpt'.format(os.getcwd())
         # If this is not the first BRER iteration, grab the checkpoint from the production
         # phase of the last round
             self.__move_cpt()
