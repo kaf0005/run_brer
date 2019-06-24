@@ -330,7 +330,7 @@ class RunConfig:
             for i in range(len(self.__names)):
                 data=self.data
                 pair=self.pair
-                A1=self.run_data.get('A',name=name)
+                A1=self.run_data.get('A',name=pair[i])
 
                 if data[i]<=25000 and data[i]>=15000:
                     self.A_parameter = 1

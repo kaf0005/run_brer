@@ -49,7 +49,6 @@ class RunData:
             'iteration': 0,
             'phase': 'training',
             'start_time': 0,
-            """'A': 50,Kasey"""
             'tau': 50,
             'tolerance': 0.25,
             'num_samples': 50,
