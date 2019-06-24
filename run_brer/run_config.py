@@ -22,7 +22,7 @@ class RunConfig:
                 pair=[],
                 data=[],
                 A1=[],
-                A_parameter=1,
+                A_parameter=[],
                 ):
         """
         The run configuration specifies the files and directory structure used for the run.
@@ -246,8 +246,10 @@ class RunConfig:
             )
 
     def __converge(self):
-
-        self.__move_cpt()
+        if self.A_parameter==0:
+            pass
+        else:
+            self.__move_cpt()
 
         md = gmx.workflow.from_tpr(self.tpr, append_output=False)
         self.build_plugins(ConvergencePluginConfig())
