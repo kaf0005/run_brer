@@ -17,12 +17,12 @@ class RunConfig:
     def __init__(self, 
                 tpr,
                 ensemble_dir,
-                pair,
-                data,
-                A1,
-                A_parameter,
                 ensemble_num=1,
                 pairs_json='pair_data.json',
+                pair=[],
+                data=[],
+                A1=[],
+                A_parameter=1,
                 ):
         """
         The run configuration specifies the files and directory structure used for the run.
