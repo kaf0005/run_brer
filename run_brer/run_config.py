@@ -180,25 +180,14 @@ class RunConfig:
                 shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
 
     def __train(self):
-        if self.A_parameter==0:
-             targets = self.run_data.get(name=name,target=targets[name])
-#            current_iter = self.run_data.get('iteration')
-#            ens_num = self.run_data.get('ensemble_num')
-#            member_dir = '{}/mem_{}'.format(self.ens_dir, ens_num)
 
-#            gmx_cpt = '{}/{}/training/state.cpt'.format(
-#                    member_dir, current_iter)
-#            shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
-
-        else:
-#            #do re-sampling
-            targets = self.pairs.re_sample()
-            self._logger.info('New targets: {}'.format(targets))
-
+        # do re-sampling
+        targets = self.pairs.re_sample()
+        self._logger.info('New targets: {}'.format(targets))
         for name in self.__names:
             self.run_data.set(name=name, target=targets[name])
 
-        #save the new targets to the BRER checkpoint file.
+        # save the new targets to the BRER checkpoint file.
         self.run_data.save_config(fnm=self.state_json)
 
         # backup existing checkpoint.
@@ -206,52 +195,49 @@ class RunConfig:
         cpt = '{}/state.cpt'.format(os.getcwd())
         if os.path.exists(cpt):
             self._logger.warning(
-            'There is a checkpoint file in your current working directory, but you are '
-            'training. The cpt will be backed up and the run will start over with new targets'
+                'There is a checkpoint file in your current working directory, but you are '
+                'training. The cpt will be backed up and the run will start over with new targets'
             )
             shutil.move(cpt, '{}.bak'.format(cpt))
 
-
         # If this is not the first BRER iteration, grab the checkpoint from the production
         # phase of the last round
-            self.__move_cpt()
+        self.__move_cpt()
 
         # Set up a dictionary to go from plugin name -> restraint name
-            sites_to_name = {}
+        sites_to_name = {}
 
         # Build the gmxapi session.
-            md = gmx.workflow.from_tpr(self.tpr, append_output=False)
-            self.build_plugins(TrainingPluginConfig())
-            for plugin in self.__plugins:
-                plugin_name = plugin.name
-                for name in self.__names:
-                    run_data_sites = "{}".format(
-                        self.run_data.get('sites', name=name))
-                    if run_data_sites == plugin_name:
-                                sites_to_name[plugin_name] = name
-                md.add_dependency(plugin)
-            context = gmx.context.ParallelArrayContext(
-                md, workdir_list=[os.getcwd()])
+        md = gmx.workflow.from_tpr(self.tpr, append_output=False)
+        self.build_plugins(TrainingPluginConfig())
+        for plugin in self.__plugins:
+            plugin_name = plugin.name
+            for name in self.__names:
+                run_data_sites = "{}".format(self.run_data.get('sites', name=name))
+                if run_data_sites == plugin_name:
+                    sites_to_name[plugin_name] = name
+            md.add_dependency(plugin)
+        context = gmx.context.ParallelArrayContext(
+            md, workdir_list=[os.getcwd()])
 
         # Run it.
-            with context as session:
-                session.run()
+        with context as session:
+            session.run()
 
         # In the future runs (convergence, production) we need the ABSOLUTE VALUE of alpha.
-            self._logger.info("=====TRAINING INFO======\n")
+        self._logger.info("=====TRAINING INFO======\n")
 
-            for i in range(len(self.__names)):
-                current_name = sites_to_name[context.potentials[i].name]
-                self.data[i]=current_name
-                current_alpha = context.potentials[i].alpha
-                current_target = context.potentials[i].target
+        for i in range(len(self.__names)):
+            current_name = sites_to_name[context.potentials[i].name]
+            current_alpha = context.potentials[i].alpha
+            current_target = context.potentials[i].target
 
-                self.run_data.set(name=current_name, alpha=current_alpha)
-                self.run_data.set(name=current_name, target=current_target)
-                self._logger.info("Plugin {}: alpha = {}, target = {}".format(
-                    current_name,
-                    current_alpha,
-                    current_target)
+            self.run_data.set(name=current_name, alpha=current_alpha)
+            self.run_data.set(name=current_name, target=current_target)
+            self._logger.info("Plugin {}: alpha = {}, target = {}".format(
+                current_name,
+                current_alpha,
+                current_target)
             )
 
     def __converge(self):
@@ -273,8 +259,8 @@ class RunConfig:
 
         for i in range(len(self.__names)):
             pair = self.pair
-            A1 = self.run_data.get(A,name=pair[i])
-            data = self.run_data.get(start_time, name=pair[i])
+            A1 = self.run_data.get('A',name=pair[i])
+            data = self.run_data.get('start_time', name=pair[i])
 
             if data[i]<=25000 and data[i]>=15000:
                 self.A_parameter = 1
@@ -395,8 +381,6 @@ class RunConfig:
         elif phase == 'convergence':
             self.__converge()
 
-            for i in range(len(self.__names)):
-                data=self.data
         else:
             self.__production()
             self.run_data.set(
