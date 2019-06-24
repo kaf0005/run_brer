@@ -181,20 +181,20 @@ class RunConfig:
 
     def __train(self):
         if self.A_parameter==0:
-            current_iter = self.run_data.get('iteration')
-            ens_num = self.run_data.get('ensemble_num')
-            
-            member_dir = '{}/mem_{}'.format(self.ens_dir, ens_num)
-            
-            gmx_cpt = '{}/{}/training/state.cpt'.format(
-                    member_dir, current_iter)
-            shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
- 
+             targets = self.run_data.get(name=name,target=targets[name])
+#            current_iter = self.run_data.get('iteration')
+#            ens_num = self.run_data.get('ensemble_num')
+#            member_dir = '{}/mem_{}'.format(self.ens_dir, ens_num)
+
+#            gmx_cpt = '{}/{}/training/state.cpt'.format(
+#                    member_dir, current_iter)
+#            shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
+
         else:
-            #do re-sampling
+#            #do re-sampling
             targets = self.pairs.re_sample()
             self._logger.info('New targets: {}'.format(targets))
-        
+
         for name in self.__names:
             self.run_data.set(name=name, target=targets[name])
 
@@ -281,13 +281,13 @@ class RunConfig:
 
             else:
                 self.A_parameter = 0
-                    
+
                 if data[i]<1:
                     B = A1[i]*0.10
                     self.run_data.set(A =B, name=pair[i])
                     self.run_data.set(
                         phase='training',
-                        start_time=0, 
+                        start_time=0,
                         iteration=self.run_data.get('iteration'))
 
                 elif data[i]<100 and data[i]>=1:
@@ -295,7 +295,7 @@ class RunConfig:
                     self.run_data.set(A = B, name=pair[i])
                     self.run_data.set(
                         phase='training',
-                        start_time=0, 
+                        start_time=0,
                         iteration=self.run_data.get('iteration'))
 
                 elif data[i]<1000 and data[i]>=100:
@@ -311,7 +311,7 @@ class RunConfig:
                     self.run_data.set(A = B, name=pair[i])
                     self.run_data.set(
                         phase='training',
-                        start_time=0, 
+                        start_time=0,
                         iteration=self.run_data.get('iteration'))
 
                 elif data[i]<12500 and data[i]>=10000:
@@ -319,7 +319,7 @@ class RunConfig:
                     self.run_data.set(A = B, name=pair[i])
                     self.run_data.set(
                         phase='training',
-                        start_time=0, 
+                        start_time=0,
                         iteration=self.run_data.get('iteration'))
 
                 elif data[i]<15000 and data[i]>=12500:
@@ -335,7 +335,7 @@ class RunConfig:
                     self.run_data.set(A= B, name=pair[i])
                     self.run_data.set(
                         phase='training',
-                        start_time=0, 
+                        start_time=0,
                         iteration=self.run_data.get('iteration'))
             self.run_data.set(phase='production')
 
