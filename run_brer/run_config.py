@@ -276,67 +276,67 @@ class RunConfig:
             A1 = self.run_data.get(A,name=pair[i])
             data = self.run_data.get(start_time, name=pair[i])
 
-                if data[i]<=25000 and data[i]>=15000:
-                    self.A_parameter = 1
+            if data[i]<=25000 and data[i]>=15000:
+                self.A_parameter = 1
 
-                else:
-                    self.A_parameter = 0
+            else:
+                self.A_parameter = 0
+                    
+                if data[i]<1:
+                    B = A1[i]*0.10
+                    self.run_data.set(A =B, name=pair[i])
+                    self.run_data.set(
+                        phase='training',
+                        start_time=0, 
+                        iteration=self.run_data.get('iteration'))
 
-                    if data[i]<1:
-                        B = A1[i]*0.10
-                        self.run_data.set(A =B, name=pair[i])
-                        self.run_data.set(
-                            phase='training',
-                            start_time=0, 
-                            iteration=self.run_data.get('iteration'))
+                elif data[i]<100 and data[i]>=1:
+                    B = A1[i]*0.15
+                    self.run_data.set(A = B, name=pair[i])
+                    self.run_data.set(
+                        phase='training',
+                        start_time=0, 
+                        iteration=self.run_data.get('iteration'))
 
-                    elif data[i]<100 and data[i]>=1:
-                        B = A1[i]*0.15
-                        self.run_data.set(A = B, name=pair[i])
-                        self.run_data.set(
-                            phase='training',
-                            start_time=0, 
-                            iteration=self.run_data.get('iteration'))
+                elif data[i]<1000 and data[i]>=100:
+                    B = A1[i]*0.20
+                    self.run_data.set(A = B, name=pair[i])
+                    self.run_data.set(
+                        phase='training',
+                        start_time=0,
+                        iteration=self.run_data.get('iteration'))
 
-                    elif data[i]<1000 and data[i]>=100:
-                        B = A1[i]*0.20
-                        self.run_data.set(A = B, name=pair[i])
-                        self.run_data.set(
-                            phase='training',
-                            start_time=0,
-                            iteration=self.run_data.get('iteration'))
+                elif data[i]<10000 and data[i]>=1000:
+                    B = A1[i]*0.25
+                    self.run_data.set(A = B, name=pair[i])
+                    self.run_data.set(
+                        phase='training',
+                        start_time=0, 
+                        iteration=self.run_data.get('iteration'))
 
-                    elif data[i]<10000 and data[i]>=1000:
-                        B = A1[i]*0.25
-                        self.run_data.set(A = B, name=pair[i])
-                        self.run_data.set(
-                            phase='training',
-                            start_time=0, 
-                            iteration=self.run_data.get('iteration'))
+                elif data[i]<12500 and data[i]>=10000:
+                    B = A1[i]*0.75
+                    self.run_data.set(A = B, name=pair[i])
+                    self.run_data.set(
+                        phase='training',
+                        start_time=0, 
+                        iteration=self.run_data.get('iteration'))
 
-                    elif data[i]<12500 and data[i]>=10000:
-                        B = A1[i]*0.75
-                        self.run_data.set(A = B, name=pair[i])
-                        self.run_data.set(
-                            phase='training',
-                            start_time=0, 
-                            iteration=self.run_data.get('iteration'))
+                elif data[i]<15000 and data[i]>=12500:
+                    B = A1[i]*0.90
+                    self.run_data.set(A = B, name=pair[i])
+                    self.run_data.set(
+                        phase='training',
+                        start_time=0,
+                        iteration=self.run_data.get('iteration'))
 
-                    elif data[i]<15000 and data[i]>=12500:
-                        B = A1[i]*0.90
-                        self.run_data.set(A = B, name=pair[i])
-                        self.run_data.set(
-                            phase='training',
-                            start_time=0,
-                            iteration=self.run_data.get('iteration'))
-
-                    else: ##data>25000:##
-                        B = A1[i]*1.3
-                        self.run_data.set(A= B, name=pair[i])
-                        self.run_data.set(
-                            phase='training',
-                            start_time=0, 
-                            iteration=self.run_data.get('iteration'))
+                else: ##data>25000:##
+                    B = A1[i]*1.3
+                    self.run_data.set(A= B, name=pair[i])
+                    self.run_data.set(
+                        phase='training',
+                        start_time=0, 
+                        iteration=self.run_data.get('iteration'))
             self.run_data.set(phase='production')
 
 
