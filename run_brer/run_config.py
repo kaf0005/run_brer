@@ -348,12 +348,12 @@ class RunConfig:
 
                     elif data<15000 and data>=12500:
                         A = A*0.90
-                        self.run_data.set('A'=A, name=pair)
+                        self.run_data.set(A = A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
                     else: ##data>25000:##
                         A = A*1.3
-                        self.run_data.set('A'= A, name=pair)
+                        self.run_data.set(A= A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
 
