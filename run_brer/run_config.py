@@ -14,7 +14,7 @@ class RunConfig:
     """Run configuration for single BRER ensemble member."""
 
 
-    def __init__(self, 
+    def __init__(self,
                 tpr,
                 ensemble_dir,
                 ensemble_num=1,
@@ -44,7 +44,7 @@ class RunConfig:
         self.A1=A1
         self.A_parameter = 1
 
-        
+
         # a list of identifiers of the residue-residue pairs that will be restrained
         self.__names = []
 
@@ -181,27 +181,28 @@ class RunConfig:
 
     def __train(self):
 
-            if  self.A_parameter==1:
-                #do re-sampling
-                targets = self.pairs.re_sample()
-                self._logger.info('New targets: {}'.format(targets))
-                for name in self.__names:
-                    self.run_data.set(name=name, target=targets[name])
+        #do re-sampling
+        targets = self.pairs.re_sample()
+        self._logger.info('New targets: {}'.format(targets))
+        for name in self.__names:
+        self.run_data.set(name=name, target=targets[name])
 
-                #save the new targets to the BRER checkpoint file.
-                self.run_data.save_config(fnm=self.state_json)
+        #save the new targets to the BRER checkpoint file.
+        self.run_data.save_config(fnm=self.state_json)
 
-                # backup existing checkpoint.
-                # TODO: Don't backup the cpt, actually use it!!
-                cpt = '{}/state.cpt'.format(os.getcwd())
-                if os.path.exists(cpt):
-                    self._logger.warning(
-                       'There is a checkpoint file in your current working directory, but you are '
-                       'training. The cpt will be backed up and the run will start over with new targets'
-                    )        
-                    shutil.move(cpt, '{}.bak'.format(cpt))
-            else:
-                cpt='{}/state.cpt'.format(os.getcwd())
+        # backup existing checkpoint.
+        # TODO: Don't backup the cpt, actually use it!!
+        cpt = '{}/state.cpt'.format(os.getcwd())
+        if os.path.exists(cpt):
+                self._logger.warning(
+                    'There is a checkpoint file in your current working directory, but you are '
+                    'training. The cpt will be backed up and the run will start over with new targets'
+                )
+        	if self.A_parameter==0:
+			pass
+		else:
+			shutil.move(cpt, '{}.bak'.format(cpt))
+
 
         # If this is not the first BRER iteration, grab the checkpoint from the production
         # phase of the last round
