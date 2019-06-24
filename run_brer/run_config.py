@@ -234,6 +234,7 @@ class RunConfig:
 
             for i in range(len(self.__names)):
                 current_name = sites_to_name[context.potentials[i].name]
+                self.data[i]=current_name
                 current_alpha = context.potentials[i].alpha
                 current_target = context.potentials[i].target
 
@@ -264,10 +265,11 @@ class RunConfig:
         # This value will be needed if a production run needs to be restarted.
 
         self.run_data.set(start_time=context.potentials[0].time)
+
         for i in range(len(self.__names)):
-            self.pair = context.potentials[i].name
             self.A1    = self.run_data.get('A',name=self.pair[i])
-            self.data = context.potentials[i].time
+            self.data = context.potentials[0].time
+        
 
 
         self._logger.info("=====CONVERGENCE INFO======\n")
