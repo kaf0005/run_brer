@@ -14,12 +14,12 @@ class RunConfig:
     """Run configuration for single BRER ensemble member."""
 
 
-    def __init__(self,
-                 A_parameter=1,
-                 tpr,
-                 ensemble_dir,
-                 ensemble_num=1,
-                 pairs_json='pair_data.json'):
+    def __init__(self, 
+                A_parameter=1,
+                tpr,
+                ensemble_dir,
+                ensemble_num=1,
+                pairs_json='pair_data.json'):
         """
         The run configuration specifies the files and directory structure used for the run.
         It determines whether the run is in the training, convergence, or production phase,
@@ -304,12 +304,12 @@ class RunConfig:
 
         if phase == 'training':
             self.__train()
-            self.run_data.set(phaseconvergence')
+            self.run_data.set(phase='convergence')
 
         elif phase == 'convergence':
             self.__converge()
 
-"""Kasey Messing around"""
+
             for i in range(len(self.__names)):
                 pair = sites_to_name[context.potentials[i].name]
                 A    = self.run_data.get('A',name=pair)
@@ -318,7 +318,7 @@ class RunConfig:
                 if data<=25000 and data>=15000:
                     self.A_parameter = 1
                     self.run_data.set(phase='production')
-                else
+                else:
                     self.A_parameter = 0
 
                     if data<1:
@@ -351,13 +351,11 @@ class RunConfig:
                         self.run_data.set('A'=A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-                    else: """data>25000:"""
+                    elif data>25000:
                         A = A*1.3
                         self.run_data.set('A'=A, name=pair)
                         self.run_data.set(phase='training',start_time=0, iteration=self.run_data.get('iteration'))
 
-
-"""Kasey stops messing around"""
 
         else:
             self.__production()
