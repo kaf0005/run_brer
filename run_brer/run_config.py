@@ -181,9 +181,9 @@ class RunConfig:
 
     def __train(self):
         if self.A_parameter==0:
-             gmx_cpt = '{}/{}/training/state.cpt'.format(
+            gmx_cpt = '{}/{}/training/state.cpt'.format(
                     member_dir, current_iter)
-                shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
+            shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
         else:
             #do re-sampling
             targets = self.pairs.re_sample()
