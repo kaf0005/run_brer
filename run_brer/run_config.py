@@ -430,7 +430,7 @@ class RunConfig:
                 current_target)
             )
 
-    
+
 
     def run(self):
 
@@ -439,7 +439,7 @@ class RunConfig:
         self.__change_directory()
 
         if phase == 'training':
-            if A_parameter==1:
+            if self.A_parameter==1:
                 self.__train()
                 self.run_data.set(phase='convergence')
             else:
