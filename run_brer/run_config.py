@@ -41,7 +41,7 @@ class RunConfig:
         self.ens_dir = ensemble_dir
         self.pair = pair
         self.data = data
-        self.A1=run_data.get('A',name=name)
+        self.A1=[]
         self.A_parameter = 1
 
 
@@ -330,7 +330,7 @@ class RunConfig:
             for i in range(len(self.__names)):
                 data=self.data
                 pair=self.pair
-                A1=self.A1
+                A1=self.run_data.get('A',name=name)
 
                 if data[i]<=25000 and data[i]>=15000:
                     self.A_parameter = 1
