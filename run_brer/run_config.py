@@ -171,7 +171,7 @@ class RunConfig:
         
     def __train(self):
         # This is checking to see if the training run was abruptly stopped and if so, restarting with original targets
-        if A_parameter ==1:
+        if self.A_parameter ==1:
             # do re-sampling
             targets = self.pairs.re_sample()
             self._logger.info('New targets: {}'.format(targets))
