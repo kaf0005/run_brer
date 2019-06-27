@@ -204,7 +204,7 @@ class RunConfig:
                     A = data[1,target_index]
                     A=A.sort()
                     A=median(A)
-                    self.run_data.set('A'=A, name=name)
+                    self.run_data.set(A=A, name=name)
                 else:
                     pass #use the default A-value
             else: 
@@ -354,16 +354,16 @@ class RunConfig:
                                 self.A_parameter=0
                                 A=self.run_data.get('A', name=name)
                                 A=1.1*A
-                                self.run_data.set('A'=A, name=name)
+                                self.run_data.set(A=A, name=name)
                                 self.run_data.set(
                                     phase='training',
                                     start_time=0,
-                                    iteration=(self.run_data.get('iteration'))
+                                    iteration=(self.run_data.get('iteration')))
                             
                             else:
                                 self.A_parameter=1
                                 corr_target = f[0,3]
-                                corr_A  = f[0,5]
+                                corr_A  = self.run_data.get('A',name=name)
                                 namedat=str(name)+'.dat'
                                 if namedat in os.getcwd():
                                     with open(namedat,"a+") as g:
