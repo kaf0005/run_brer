@@ -340,6 +340,9 @@ class RunConfig:
             for name in self.__names:
                 namelog=name +'.log'
                 if namelog in os.getcwd():
+                    self.run_data.set(phase='training')
+                    phase = self.run_data.get('phase')
+                    self.__change_directory
                     for namelog in os.getcwd():
                         with open(namelog) as openfile:
                             f=openfile.readlines()
