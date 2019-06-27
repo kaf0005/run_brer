@@ -9,6 +9,7 @@ import logging
 import gmx
 import json
 import atexit
+import numpy as np
 
 
 class RunConfig:
@@ -43,7 +44,6 @@ class RunConfig:
         self.data = data
         self.A1 = []
         self.A_parameter = 1
-
         # a list of identifiers of the residue-residue pairs that will be restrained
         self.__names = []
 
@@ -71,7 +71,7 @@ class RunConfig:
                 self.run_data.from_pair_data(pd)
             self.run_data.save_config(self.state_json)
 
-            # List of plugins
+        # List of plugins
         self.__plugins = []
 
         # Logging
@@ -109,15 +109,11 @@ class RunConfig:
 
     def build_plugins(self, plugin_config):
         """
-
         Parameters
         ----------
         plugin_config :
-
-
         Returns
         -------
-
         """
         # One plugin per restraint.
         # TODO: what is the expected behavior when a list of plugins exists? Probably wipe them.
@@ -177,7 +173,7 @@ class RunConfig:
                 gmx_cpt = '{}/{}/convergence/state.cpt'.format(
                     member_dir, current_iter)
                 shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
-
+        
     def __train(self):
 
         # do re-sampling
@@ -317,71 +313,78 @@ class RunConfig:
 
         self.run_data.set(start_time=context.potentials[0].time)
 
-        for i in range(len(self.__names)):
-            pair = self.pair
-            A1 = self.run_data.get('A', name=pair[i])
-            data = self.run_data.get('start_time', name=pair[i])
+
+        for name in self.__names:
+            A1 = self.run_data.get('A', name=name)
+            namelog=name +'.log'
+            for namelog in os.getcwd():
+                    with open(namelog) as openfile:
+                        contents1=openfile.readlines()
+                        contents1=contents1[-1]
+                        contents1 =contents1.replace(' ',',')
+                        output=np.matrix(contents1)
+            time=output[0,0]
             print(data)
             print(A1)
-            print(pair)
 
-            if data[i] <= 25000 and data[i] >= 15000:
-                self.A_parameter = 1
+
+            if time <= 25000 and time >= 15000:
+               self.A_parameter = 1
 
             else:
                 self.A_parameter = 0
 
-                if data[i] < 1:
-                    B = A1[i]*0.10
-                    self.run_data.set(A=B, name=pair[i])
+                if time < 1:
+                    A1 = A1*0.10
+                    self.run_data.set(A=A1, name=name)
                     self.run_data.set(
                         phase='training',
                         start_time=0,
                         iteration=self.run_data.get('iteration'))
 
-                elif data[i] < 100 and data[i] >= 1:
-                    B = A1[i]*0.15
-                    self.run_data.set(A=B, name=pair[i])
+                elif time < 100 and time >= 1:
+                    A1 = A1*0.15
+                    self.run_data.set(A=A1, name=name)
                     self.run_data.set(
                         phase='training',
                         start_time=0,
                         iteration=self.run_data.get('iteration'))
 
-                elif data[i] < 1000 and data[i] >= 100:
-                    B = A1[i]*0.20
-                    self.run_data.set(A=B, name=pair[i])
+                elif time < 1000 and time >= 100:
+                    A1 = A1*0.20
+                    self.run_data.set(A=A1, name=name)
                     self.run_data.set(
                         phase='training',
                         start_time=0,
                         iteration=self.run_data.get('iteration'))
 
-                elif data[i] < 10000 and data[i] >= 1000:
-                    B = A1[i]*0.25
-                    self.run_data.set(A=B, name=pair[i])
+                elif time < 10000 and time >= 1000:
+                    A1 = A1*0.25
+                    self.run_data.set(A=A1, name=name)
                     self.run_data.set(
                         phase='training',
                         start_time=0,
                         iteration=self.run_data.get('iteration'))
 
-                elif data[i] < 12500 and data[i] >= 10000:
-                    B = A1[i]*0.75
-                    self.run_data.set(A=B, name=pair[i])
+                elif time < 12500 and time >= 10000:
+                    A1 = A1*0.75
+                    self.run_data.set(A=A1, name=name)
                     self.run_data.set(
                         phase='training',
                         start_time=0,
                         iteration=self.run_data.get('iteration'))
 
-                elif data[i] < 15000 and data[i] >= 12500:
-                    B = A1[i]*0.90
-                    self.run_data.set(A=B, name=pair[i])
+                elif time < 15000 and time >= 12500:
+                    A1 = A1*0.90
+                    self.run_data.set(A=A1, name=name)
                     self.run_data.set(
                         phase='training',
                         start_time=0,
                         iteration=self.run_data.get('iteration'))
 
-                else:  # data>25000:##
-                    B = A1[i]*1.3
-                    self.run_data.set(A=B, name=pair[i])
+                else:  # time>25000:##
+                    A1 = A1*1.3
+                    self.run_data.set(A=A1, name=name)
                     self.run_data.set(
                         phase='training',
                         start_time=0,
