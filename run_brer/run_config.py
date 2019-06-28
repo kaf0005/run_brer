@@ -339,44 +339,51 @@ class RunConfig:
             # file and then the convergence phase is allowed to run
             for name in self.__names:
                 namelog=name +'.log'
-                if namelog in os.getcwd():
-                    self.run_data.set(phase='training')
-                    phase = self.run_data.get('phase')
-                    self.__change_directory
-                    for namelog in os.getcwd():
-                        with open(namelog) as openfile:
-                            f=openfile.readlines()
-                            f=f[-1]
-                            f=f.replace(' ',',')
-                            output=np.matrix(f)
-                            sample_count=f[0,2]
-                            if sample_count >400:
-                                self.A_parameter=0
-                                A=self.run_data.get('A', name=name)
-                                A=1.1*A
-                                self.run_data.set(A=A, name=name)
-                                self.run_data.set(
-                                    phase='training',
-                                    start_time=0,
-                                    iteration=(self.run_data.get('iteration')))
+                os.chdir("../training")
+                #this works cwd is right namelog is wrong
+                print(namelog)
+                if os.path.exists(namelog):
+                   # for namelog in os.getcwd():
+                    with open(namelog) as openfile:
+                        f=openfile.readlines()
+                        f=f[-1]
+                        f=f.replace('\t',',')
+                        f=np.matrix(f)
+                        sample_count=f[0,2]
+                        if sample_count >400:
+                            self.A_parameter=0
+                            A=self.run_data.get('A', name=name)
+                            A=1.1*A
+                            self.run_data.set(A=A, name=name)
+                            self.run_data.set(
+                                phase='training',
+                                start_time=0,
+                                iteration=(self.run_data.get('iteration')))
                             
-                            else:
-                                self.A_parameter=1
-                                corr_target = f[0,3]
-                                corr_A  = self.run_data.get('A',name=name)
-                                namedat=str(name)+'.dat'
-                                if namedat in os.getcwd():
-                                    with open(namedat,"a+") as g:
-                                        g.write(corr_target, corr_A)
-                                    g.close()
-                                    self.__converge()
+                        else:
+                            self.A_parameter=1
+                            corr_target = f[0,3]
+                            corr_A  = self.run_data.get('A',name=name)
+                            namedat=str(name)+'.dat'
+                            if namedat in os.getcwd():
+                                with open(namedat,"a+") as g:
+                                    g.write('%f' % corr_target)
+                                    g.write("\t")
+                                    g.write('%f' % corr_A)
+                                g.close()
+                                os.chdir("../convergence")
+                                self.__converge()
                                 
-                                else:
-                                    with open(namedat, "w+") as g:
-                                        g.write("Target          A")
-                                        g.write(corr_target, corr_A)
-                                    g.close()
-                                    self.__converge
+                            else:
+                                with open(namedat, "w+") as g:
+                                    g.write("Target          A")
+                                    g.write("\n")
+                                    g.write('%f' % corr_target)
+                                    g.write("\t")
+                                    g.write('%f' %corr_A)
+                                g.close()
+                                os.chdir("../convergence")
+                                self.__converge
                 else:
                     print("the cwd is not training, figure this out")              
         else:
