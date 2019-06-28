@@ -227,6 +227,8 @@ class RunConfig:
                                         self.run_data.set(A=A,name=name)
                                 else:
                                         self.run_data.set(A=A,name=name)
+                            else:
+                                self.run_data.set(A=A, name=name)
                     else:
                         self.run_data.set(A=A, name=name)
                 else:
