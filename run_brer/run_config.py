@@ -189,6 +189,7 @@ class RunConfig:
 
         # This is going through the .dat files I generated in def__run, this is the memory storage of A
         for name in self.__names:
+            namedat_reject=str(name)+'_reject.dat'
             namedat=str(name)+'.dat'
             if namedat in os.getcwd():
                 with open(namedat, "r") as g:
@@ -200,14 +201,35 @@ class RunConfig:
                 data=np.matrix(lines)
                 possible_target = data[:,0]
                 possible_target=np.array(possible_target)
-                current_target=self.run_data.get(name=name, target=targets[name])
+                current_target= targets[name]
                 if current_target in possible_target:
                     target_index =   np.where(possible_target==current_target)
                     A = data[target_index,1]
                     A=np.array(A)
                     A=np.sort(A,axis=None)
                     A=np.median(A)
-                    self.run_data.set(A=A, name=name)
+                    if A==self.run_data.get('A',name=name):
+                        if namedat_reject in os.getcwd():
+                                with open(namedat_reject, "r") as g:
+                                    lines=g.readlines()[1:]
+                                g.close()
+                                lines=lines.replace('\n',';')
+                                lines=lines.replace(' ',',')
+                                lines=lines.strip(',;')
+                                data=np.matrix(lines)
+                                possible_target = data[:,2]
+                                possible_target=np.array(possible_target)
+                                current_target= targets[name]
+                                if current_target in possible_target:
+                                    target_index =   np.where(possible_target==current_target)
+                                    A1 = data[target_index,2]
+                                    if A in A1:
+                                            A=1.1*A
+                                            self.run_data.set(A=A,name=name)
+                                    else:
+                                            self.run_data.set(A=A,name=name)
+                    else:
+                        self.run_data.set(A=A, name=name)
                 else:
                     pass #use the default A-value
             else:
@@ -358,45 +380,67 @@ class RunConfig:
                         f=openfile.readlines()
                         f=f[-1]
                         f=f.replace('\t',',')
-                        f=np.matrix(f)
-
-                        for i in range(len(name in self.__names)):
-                            sample_count[i]=f[0,2]
-
-                            if sample_count[i] >400:
-                                self.A_parameter=0
-                                A=self.run_data.get('A', name=name)
-                                A=1.1*A
-                                self.run_data.set(A=A, name=name)
+                        f=np.matrix(f) 
+                        sample_count=f[0,2]
+                        if sample_count >400:
+                            self.A_parameter=0
+                            A=self.run_data.get('A', name=name)
+                            corr_R = f[0,1]
+                            corr_target = f[0,3]
+                            corr_A  = self.run_data.get('A',name=name)
+                            A=1.1*A
+                                
+                            self.run_data.set(A=A, name=name)
+                            namedat=str(name)+'_reject.dat'
+                            if namedat in os.getcwd():
+                                with open(namedat,"a+") as g:
+                                    g.write('%f' % corr_R)
+                                    g.write("\t")
+                                    g.write('%f' % corr_target)
+                                    g.write("\t")
+                                    g.write('%f' % corr_A)
+                                g.close()
 
                             else:
-                                corr_target = f[0,3]
-                                corr_A  = self.run_data.get('A',name=name)
-                                namedat=str(name)+'.dat'
-                                if namedat in os.getcwd():
-                                    with open(namedat,"a+") as g:
-                                        g.write('%f' % corr_target)
-                                        g.write("\t")
-                                        g.write('%f' % corr_A)
-                                    g.close()
+                                with open(namedat, "w+") as g:
+                                    g.write("R        Target          A")
+                                    g.write("\n")
+                                    g.write('%f' % corr_R)
+                                    g.write("\t")
+                                    g.write('%f' % corr_target)
+                                    g.write("\t")
+                                    g.write('%f' %corr_A)
+                                g.close()
 
-                                else:
-                                    with open(namedat, "w+") as g:
-                                        g.write("Target          A")
-                                        g.write("\n")
-                                        g.write('%f' % corr_target)
-                                        g.write("\t")
-                                        g.write('%f' %corr_A)
-                                    g.close()
+                        else:
+                            corr_R = f[0,1]
+                            corr_target = f[0,3]
+                            corr_A  = self.run_data.get('A',name=name)
+                            namedat=str(name)+'.dat'
+                            if namedat in os.getcwd():
+                                with open(namedat,"a+") as g:
+                                    g.write('%f' % corr_target)
+                                    g.write("\t")
+                                    g.write('%f' % corr_A)
+                                g.close()
 
-                            if self.A_parameter==1:
-                                os.chdir("../convergence")
-                                self.__converge
                             else:
-                                 self.run_data.set(
-                                    phase='training',
-                                    start_time=0,
-                                    iteration=(self.run_data.get('iteration')))
+                                with open(namedat, "w+") as g:
+                                    g.write("Target          A")
+                                    g.write("\n")
+                                    g.write('%f' % corr_target)
+                                    g.write("\t")
+                                    g.write('%f' %corr_A)
+                                g.close()
+
+                        if self.A_parameter==1:
+                            os.chdir("../convergence")
+                            self.__converge
+                        else:
+                            self.run_data.set(
+                                phase='training',
+                                start_time=0,
+                                iteration=(self.run_data.get('iteration')))
 
                 else:
                     # The training phase should always start normally, so there has to be log files
