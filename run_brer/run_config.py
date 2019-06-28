@@ -203,9 +203,10 @@ class RunConfig:
                 current_target=self.run_data.get(name=name, target=targets[name])
                 if current_target in possible_target:
                     target_index =   np.where(possible_target==current_target)
-                    A = data[1,target_index]
-                    A=A.sort()
-                    A=median(A)
+                    A = data[target_index,1]
+                    A=np.array(A)
+                    A=np.sort(A,axis=None)
+                    A=np.median(A)
                     self.run_data.set(A=A, name=name)
                 else:
                     pass #use the default A-value
