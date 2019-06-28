@@ -50,7 +50,7 @@ class RunData:
             'phase': 'training',
             'start_time': 0,
             'tau': 50,
-            'tolerance': 0.25,
+            'tolerance': 0.1,
             'num_samples': 50,
             'sample_period': 100,
             'production_time': 10000  # 10 ns
