@@ -194,9 +194,9 @@ class RunConfig:
                 with open(namedat, "r") as g:
                     lines=g.readlines()[1:]
                 g.close()
-                lines=lines.replace('\n',':')
+                lines=lines.replace('\n',';')
                 lines=lines.replace(' ',',')
-                lines=lines.strip(',:')
+                lines=lines.strip(',;')
                 data=np.matrix(lines)
                 possible_target = data[:,0]
                 possible_target=np.array(possible_target)
