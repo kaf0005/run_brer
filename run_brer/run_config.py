@@ -217,7 +217,7 @@ class RunConfig:
                                 lines=lines.replace(' ',',')
                                 lines=lines.strip(',;')
                                 data=np.matrix(lines)
-                                possible_target = data[:,2]
+                                possible_target = data[:,1]
                                 possible_target=np.array(possible_target)
                                 current_target= targets[name]
                                 if current_target in possible_target:
@@ -380,7 +380,7 @@ class RunConfig:
                         f=openfile.readlines()
                         f=f[-1]
                         f=f.replace('\t',',')
-                        f=np.matrix(f) 
+                        f=np.matrix(f)
                         sample_count=f[0,2]
                         if sample_count >400:
                             self.A_parameter=0
@@ -389,7 +389,7 @@ class RunConfig:
                             corr_target = f[0,3]
                             corr_A  = self.run_data.get('A',name=name)
                             A=1.1*A
-                                
+
                             self.run_data.set(A=A, name=name)
                             namedat=str(name)+'_reject.dat'
                             if namedat in os.getcwd():
