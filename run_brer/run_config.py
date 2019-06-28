@@ -351,23 +351,22 @@ class RunConfig:
             for name in self.__names:
                 namelog=name +'.log'
                 os.chdir("../training")
+
                 if os.path.exists(namelog):
                     with open(namelog) as openfile:
                         f=openfile.readlines()
                         f=f[-1]
                         f=f.replace('\t',',')
                         f=np.matrix(f)
+
                         for i in range(len(name in self.__names)):
                             sample_count[i]=f[0,2]
+
                             if sample_count[i] >400:
                                 self.A_parameter=0
                                 A=self.run_data.get('A', name=name)
                                 A=1.1*A
                                 self.run_data.set(A=A, name=name)
-                                self.run_data.set(
-                                    phase='training',
-                                    start_time=0,
-                                    iteration=(self.run_data.get('iteration')))
 
                             else:
                                 corr_target = f[0,3]
@@ -379,8 +378,6 @@ class RunConfig:
                                         g.write("\t")
                                         g.write('%f' % corr_A)
                                     g.close()
-                                    os.chdir("../convergence")
-                                    self.__converge()
 
                                 else:
                                     with open(namedat, "w+") as g:
@@ -390,9 +387,18 @@ class RunConfig:
                                         g.write("\t")
                                         g.write('%f' %corr_A)
                                     g.close()
-                                    os.chdir("../convergence")
-                                    self.__converge
+
+                            if self.A_parameter==1:
+                                os.chdir("../convergence")
+                                self.__converge
+                            else:
+                                 self.run_data.set(
+                                    phase='training',
+                                    start_time=0,
+                                    iteration=(self.run_data.get('iteration')))
+
                 else:
+                    # The training phase should always start normally, so there has to be log files
                     print("The log files were not located, thus a training run was not completd. Starting training run now:")
                     self.run_data.set(
                         phase='training',
