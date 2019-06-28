@@ -168,7 +168,7 @@ class RunConfig:
                 gmx_cpt = '{}/{}/convergence/state.cpt'.format(
                     member_dir, current_iter)
                 shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
-        
+
     def __train(self):
         # This is checking to see if the training run was abruptly stopped and if so, restarting with original targets
         if self.A_parameter ==1:
@@ -182,9 +182,11 @@ class RunConfig:
             self.run_data.save_config(fnm=self.state_json)
         else:
             #reload old targets
-            for name in self.__names:
-                self.run_data.get(name=name, target=targets[name])
-            self.run_data.save_config(fnm=self.state_json)
+            #for name in self.__names:
+            #    self.run_data.get(name=name, target=targets[name])
+            #self.run_data.save_config(fnm=self.state_json)
+            pass #do nothing and use the old cpt file for the original targets
+
         # This is going through the .dat files I generated in def__run, this is the memory storage of A
         for name in self.__names:
             namedat=str(name)+'.dat'
@@ -194,7 +196,7 @@ class RunConfig:
                 g.close()
                 lines=lines.replace('\n',':')
                 lines=lines.replace(' ',',')
-                lines=lines.strip(',:')   
+                lines=lines.strip(',:')
                 data=np.matrix(lines)
                 possible_target = data[:,0]
                 possible_target=np.array(possible_target)
@@ -207,18 +209,26 @@ class RunConfig:
                     self.run_data.set(A=A, name=name)
                 else:
                     pass #use the default A-value
-            else: 
+            else:
                     pass # this means this is the first run of training
 
         # backup existing checkpoint.
         # TODO: Don't backup the cpt, actually use it!!
         cpt = '{}/state.cpt'.format(os.getcwd())
-        if os.path.exists(cpt):
-            self._logger.warning(
-                'There is a checkpoint file in your current working directory, but you are '
-                'training. The cpt will be backed up and the run will start over with new targets'
-            )
-            shutil.move(cpt, '{}.bak'.format(cpt))
+        if self.A_parameter==1:
+            if os.path.exists(cpt):
+                self._logger.warning(
+                    'There is a checkpoint file in your current working directory, but you are '
+                    'training. The cpt will be backed up and the run will start over with new targets'
+                )
+                shutil.move(cpt, '{}.bak'.format(cpt))
+        else:
+             if os.path.exists(cpt):
+                self._logger.warning(
+                    'There is a checkpoint file in your current working directory; however you are '
+                    'training with original targets. The cpt will NOT  be backed up and the run will start over with new targets'
+                )
+
 
         # If this is not the first BRER iteration, grab the checkpoint from the production
         # phase of the last round
@@ -260,7 +270,7 @@ class RunConfig:
                 current_target)
             )
 
-   
+
     def __converge(self):
         self.__move_cpt()
 
@@ -333,59 +343,62 @@ class RunConfig:
             self.run_data.set(phase='convergence')
 
         elif phase == 'convergence':
-            # these statements, check for the training log files in the cwd (hopefully that remains in the training one), 
-            # it reads in the log files according to the names, checks if the sample count>400, then decides whether to restart the training
-            # with the same targets and doing so increasing A by 10%, and if <400, the target is saved with the corresponding a-value in a .dat 
-            # file and then the convergence phase is allowed to run
+
+            # Checking if training for alpha for all restraints was completed within 20ns, and if so, the target and its corresponding A-value are recorded in a .dat
+            # for future use, and the covergence run follows.
+
+            self.A_parameter=1
             for name in self.__names:
                 namelog=name +'.log'
                 os.chdir("../training")
-                #this works cwd is right namelog is wrong
-                print(namelog)
                 if os.path.exists(namelog):
-                   # for namelog in os.getcwd():
                     with open(namelog) as openfile:
                         f=openfile.readlines()
                         f=f[-1]
                         f=f.replace('\t',',')
                         f=np.matrix(f)
-                        sample_count=f[0,2]
-                        if sample_count >400:
-                            self.A_parameter=0
-                            A=self.run_data.get('A', name=name)
-                            A=1.1*A
-                            self.run_data.set(A=A, name=name)
-                            self.run_data.set(
-                                phase='training',
-                                start_time=0,
-                                iteration=(self.run_data.get('iteration')))
-                            
-                        else:
-                            self.A_parameter=1
-                            corr_target = f[0,3]
-                            corr_A  = self.run_data.get('A',name=name)
-                            namedat=str(name)+'.dat'
-                            if namedat in os.getcwd():
-                                with open(namedat,"a+") as g:
-                                    g.write('%f' % corr_target)
-                                    g.write("\t")
-                                    g.write('%f' % corr_A)
-                                g.close()
-                                os.chdir("../convergence")
-                                self.__converge()
-                                
+                        for i in range(len(name in self.__names)):
+                            sample_count[i]=f[0,2]
+                            if sample_count[i] >400:
+                                self.A_parameter=0
+                                A=self.run_data.get('A', name=name)
+                                A=1.1*A
+                                self.run_data.set(A=A, name=name)
+                                self.run_data.set(
+                                    phase='training',
+                                    start_time=0,
+                                    iteration=(self.run_data.get('iteration')))
+
                             else:
-                                with open(namedat, "w+") as g:
-                                    g.write("Target          A")
-                                    g.write("\n")
-                                    g.write('%f' % corr_target)
-                                    g.write("\t")
-                                    g.write('%f' %corr_A)
-                                g.close()
-                                os.chdir("../convergence")
-                                self.__converge
+                                corr_target = f[0,3]
+                                corr_A  = self.run_data.get('A',name=name)
+                                namedat=str(name)+'.dat'
+                                if namedat in os.getcwd():
+                                    with open(namedat,"a+") as g:
+                                        g.write('%f' % corr_target)
+                                        g.write("\t")
+                                        g.write('%f' % corr_A)
+                                    g.close()
+                                    os.chdir("../convergence")
+                                    self.__converge()
+
+                                else:
+                                    with open(namedat, "w+") as g:
+                                        g.write("Target          A")
+                                        g.write("\n")
+                                        g.write('%f' % corr_target)
+                                        g.write("\t")
+                                        g.write('%f' %corr_A)
+                                    g.close()
+                                    os.chdir("../convergence")
+                                    self.__converge
                 else:
-                    print("the cwd is not training, figure this out")              
+                    print("The log files were not located, thus a training run was not completd. Starting training run now:")
+                    self.run_data.set(
+                        phase='training',
+                        start_time=0,
+                        iteration=(self.run_data.get('iteration')))
+
         else:
             self.__production()
             self.run_data.set(
