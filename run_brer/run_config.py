@@ -208,26 +208,25 @@ class RunConfig:
                     A=np.array(A)
                     A=np.sort(A,axis=None)
                     A=np.median(A)
-                    if A==self.run_data.get('A',name=name):
-                        if namedat_reject in os.getcwd():
-                                with open(namedat_reject, "r") as g:
-                                    lines=g.readlines()[1:]
-                                g.close()
-                                lines=lines.replace('\n',';')
-                                lines=lines.replace(' ',',')
-                                lines=lines.strip(',;')
-                                data=np.matrix(lines)
-                                possible_target = data[:,1]
-                                possible_target=np.array(possible_target)
-                                current_target= targets[name]
-                                if current_target in possible_target:
-                                    target_index =   np.where(possible_target==current_target)
-                                    A1 = data[target_index,2]
-                                    if A in A1:
-                                            A=1.1*A
-                                            self.run_data.set(A=A,name=name)
-                                    else:
-                                            self.run_data.set(A=A,name=name)
+                    if namedat_reject in os.getcwd():
+                            with open(namedat_reject, "r") as g:
+                                lines=g.readlines()[1:]
+                            g.close()
+                            lines=lines.replace('\n',';')
+                            lines=lines.replace(' ',',')
+                            lines=lines.strip(',;')
+                            data=np.matrix(lines)
+                            possible_target = data[:,1]
+                            possible_target=np.array(possible_target)
+                            current_target= targets[name]
+                            if current_target in possible_target:
+                                target_index =   np.where(possible_target==current_target)
+                                A1 = data[target_index,2]
+                                if A in A1:
+                                        A=1.1*A
+                                        self.run_data.set(A=A,name=name)
+                                else:
+                                        self.run_data.set(A=A,name=name)
                     else:
                         self.run_data.set(A=A, name=name)
                 else:
