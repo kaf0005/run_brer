@@ -256,7 +256,6 @@ class RunConfig:
 
         # If this is not the first BRER iteration, grab the checkpoint from the production
         # phase of the last round
-        self.__move_cpt()
 
         # Set up a dictionary to go from plugin name -> restraint name
         sites_to_name = {}
