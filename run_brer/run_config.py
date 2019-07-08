@@ -184,9 +184,16 @@ class RunConfig:
             #reload old targets
             #for name in self.__names:
             #    self.run_data.get(name=name, target=targets[name])
+<<<<<<< HEAD
             #self.run_data.save_config(fnm=self.state_json)
             #pass #do nothing and use the old cpt file for the original targets
             self.__move_cpt()
+=======
+            #self.run_data.save_config(fnm=self.state_json)'
+                if os.path.exists(self.state_json):
+                    self.run_data.from_dictionary(json.load(open(self.state_json)))
+            #do nothing and use the old cpt file for the original targets
+>>>>>>> 85a219b5b297103f2fd29fa0f9e770a4af3f1861
 
         # This is going through the .dat files I generated in def__run, this is the memory storage of A
         for name in self.__names:
