@@ -185,7 +185,8 @@ class RunConfig:
             #for name in self.__names:
             #    self.run_data.get(name=name, target=targets[name])
             #self.run_data.save_config(fnm=self.state_json)
-            pass #do nothing and use the old cpt file for the original targets
+            #pass #do nothing and use the old cpt file for the original targets
+            self.__move_cpt()
 
         # This is going through the .dat files I generated in def__run, this is the memory storage of A
         for name in self.__names:
@@ -436,7 +437,7 @@ class RunConfig:
 
                         if self.A_parameter==1:
                             os.chdir("../convergence")
-                            self.__converge
+                            self.__converge()
                         else:
                             self.run_data.set(
                                 phase='training',
