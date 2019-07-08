@@ -1,6 +1,8 @@
+"""RunConfig class handles the actual workflow logic."""
+
 from run_brer.run_data import RunData
 from run_brer.pair_data import MultiPair
-from run_brer.plugin_configs import TrainingPluginConfig, ConvergencePluginConfig, ProductionPluginConfig
+from run_brer.plugin_configs import TrainingPluginConfig, ConvergencePluginConfig, ProductionPluginConfig, PluginConfig
 from run_brer.directory_helper import DirectoryHelper
 from copy import deepcopy
 import os
@@ -8,8 +10,8 @@ import shutil
 import logging
 import gmx
 import json
-import atexit
 import numpy as np
+# import atexit
 
 
 class RunConfig:
@@ -22,17 +24,23 @@ class RunConfig:
                  pairs_json='pair_data.json',
                  A_parameter=[],
                  ):
-        """
-        The run configuration specifies the files and directory structure used for the run.
-        It determines whether the run is in the training, convergence, or production phase,
-        then performs the run.
-        :param tpr: path to tpr. Must be gmx 2017 compatible.
-        :param ensemble_dir: path to top directory which contains the full ensemble.
-        :param ensemble_num: the ensemble member to run.
-        :param pairs_json: path to file containing *ALL* the pair metadata. An example of
-        what such a file should look like is provided in the examples directory.
+        """The run configuration specifies the files and directory structure
+        used for the run. It determines whether the run is in the training,
+        convergence, or production phase, then performs the run.
 
-        :
+        Parameters
+        ----------
+        tpr : str
+            path to tpr. Must be gmx 2017 compatible.
+        ensemble_dir : str
+            path to top directory which contains the full ensemble.
+        ensemble_num : int, optional
+            the ensemble member to run, by default 1
+        pairs_json : str, optional
+            path to file containing *ALL* the pair metadata.
+            An example of what such a file should look like is provided in the d$
+            by default 'pair_data.json'
+
         """
 
         self.tpr = tpr
@@ -48,13 +56,12 @@ class RunConfig:
         # use the same identifiers for the pairs here as those provided in the pair metadata
         # file this prevents mixing up pair data amongst the different pairs (i.e.,
         # accidentally applying the restraints for pair 1 to pair 2.)
-        self.__names = self.pairs.get_names()
+        self.__names = self.pairs.names
 
         self.run_data = RunData()
         self.run_data.set(ensemble_num=ensemble_num)
 
-        self.state_json = '{}/mem_{}/state.json'.format(
-            ensemble_dir, self.run_data.get('ensemble_num'))
+        self.state_json = '{}/mem_{}/state.json'.format(ensemble_dir, self.run_data.get('ensemble_num'))
         # If we're in the middle of a run, load the BRER checkpoint file and continue from
         # the current state.
         if os.path.exists(self.state_json):
@@ -79,60 +86,52 @@ class RunConfig:
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
         # create formatter and add it to the handlers
-        formatter = logging.Formatter(
-            '%(asctime)s:%(name)s:%(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s - %(message)s')
         fh.setFormatter(formatter)
         ch.setFormatter(formatter)
         # add the handlers to the logger
         self._logger.addHandler(fh)
         self._logger.addHandler(ch)
 
-        self._logger.info("Initialized the run configuration: {}".format(
-            self.run_data.as_dictionary()))
+        self._logger.info("Initialized the run configuration: {}".format(self.run_data.as_dictionary()))
         self._logger.info("Names of restraints: {}".format(self.__names))
 
         # Need to cleanly handle cancelled jobs: write out a checkpoint of the state if the
         # job is exited.
-        def cleanup():
-            """ """
-            self.run_data.save_config(self.state_json)
-            self._logger.info(
-                "BRER received INT signal, stopping and saving data to {}".
-                format(self.state_json))
+        # def cleanup():
+        #     """"""
+        #     self.run_data.save_config(self.state_json)
+        #     self._logger.info("BRER received INT signal, stopping and saving data to {}".format(self.state_json))
 
-        atexit.register(cleanup)
+        # atexit.register(cleanup)
 
-    def build_plugins(self, plugin_config):
-        """
+    def build_plugins(self, plugin_config: PluginConfig):
+        """Builds the plugin configuration. For each pair-wise restraint,
+        populate the plugin with data: both the "general" data and the data
+        unique to that restraint.
+
         Parameters
         ----------
-        plugin_config :
-        Returns
-        -------
+        plugin_config : PluginConfig
+            the particular plugin configuration (Training, Convergence, Production) for the run.
         """
+
         # One plugin per restraint.
         # TODO: what is the expected behavior when a list of plugins exists? Probably wipe them.
-
         self.__plugins = []
-        general_params = self.run_data.as_dictionary()['general parameters']
-
+        general_params = self.run_data.general_params
         # For each pair-wise restraint, populate the plugin with data: both the "general" data and
         # the data unique to that restraint.
         for name in self.__names:
-            pair_params = self.run_data.as_dictionary()['pair parameters'][
-                name]
+            pair_params = self.run_data.pair_params[name]
             new_restraint = deepcopy(plugin_config)
-            new_restraint.scan_dictionary(
-                general_params)  # load general data into current restraint
-            new_restraint.scan_dictionary(
-                pair_params)  # load pair-specific data into current restraint
+            new_restraint.scan_metadata(general_params)  # load general data into current restraint
+            new_restraint.scan_metadata(pair_params)  # load pair-specific data into current restraint
             self.__plugins.append(new_restraint.build_plugin())
 
     def __change_directory(self):
         # change into the current working directory (ensemble_path/member_path/iteration/phase)
-        dir_help = DirectoryHelper(
-            top_dir=self.ens_dir,
-            param_dict=self.run_data.general_params.get_as_dictionary())
+        dir_help = DirectoryHelper(top_dir=self.ens_dir, param_dict=self.run_data.general_params.get_as_dictionary())
         dir_help.build_working_dir()
         dir_help.change_dir('phase')
 
@@ -142,12 +141,8 @@ class RunConfig:
         phase = self.run_data.get('phase')
 
         # If the cpt already exists, don't overwrite it
-        if os.path.exists(
-                '{}/mem_{}/{}/{}/state.cpt'.format(self.ens_dir, ens_num,
-                                                   current_iter, phase)):
-            self._logger.info(
-                "Phase is {} and state.cpt already exists: not moving any files".
-                format(phase))
+        if os.path.exists('{}/mem_{}/{}/{}/state.cpt'.format(self.ens_dir, ens_num, current_iter, phase)):
+            self._logger.info("Phase is {} and state.cpt already exists: not moving any files".format(phase))
 
         else:
             member_dir = '{}/mem_{}'.format(self.ens_dir, ens_num)
@@ -156,8 +151,7 @@ class RunConfig:
             if phase in ['training', 'convergence']:
                 if prev_iter > -1:
                     # Get the production cpt from previous iteration
-                    gmx_cpt = '{}/{}/production/state.cpt'.format(
-                        member_dir, prev_iter)
+                    gmx_cpt = '{}/{}/production/state.cpt'.format(member_dir, prev_iter)
                     shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
 
                 else:
@@ -165,8 +159,7 @@ class RunConfig:
 
             else:
                 # Get the convergence cpt from current iteration
-                gmx_cpt = '{}/{}/convergence/state.cpt'.format(
-                    member_dir, current_iter)
+                gmx_cpt = '{}/{}/convergence/state.cpt'.format(member_dir, current_iter)
                 shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
 
     def __train(self):
@@ -184,10 +177,16 @@ class RunConfig:
             #reload old targets
             #for name in self.__names:
             #    self.run_data.get(name=name, target=targets[name])
+
+            #self.run_data.save_config(fnm=self.state_json)
+            #pass #do nothing and use the old cpt file for the original targets
+            self.__move_cpt()
+
             #self.run_data.save_config(fnm=self.state_json)'
                 if os.path.exists(self.state_json):
                     self.run_data.from_dictionary(json.load(open(self.state_json)))
             #do nothing and use the old cpt file for the original targets
+
 
         # This is going through the .dat files I generated in def__run, this is the memory storage of A
         for name in self.__names:
@@ -241,6 +240,7 @@ class RunConfig:
         # backup existing checkpoint.
         # TODO: Don't backup the cpt, actually use it!!
         cpt = '{}/state.cpt'.format(os.getcwd())
+
         if self.A_parameter==1:
             if os.path.exists(cpt):
                 self._logger.warning(
@@ -255,11 +255,6 @@ class RunConfig:
                     'training with original targets. The cpt will NOT  be backed up and the run will start over with new targets'
                 )
 
-
-        # If this is not the first BRER iteration, grab the checkpoint from the production
-        # phase of the last round
-        self.__move_cpt()
-
         # Set up a dictionary to go from plugin name -> restraint name
         sites_to_name = {}
 
@@ -273,8 +268,7 @@ class RunConfig:
                 if run_data_sites == plugin_name:
                     sites_to_name[plugin_name] = name
             md.add_dependency(plugin)
-        context = gmx.context.ParallelArrayContext(
-            md, workdir_list=[os.getcwd()])
+        context = gmx.context.ParallelArrayContext(md, workdir_list=[os.getcwd()])
 
         # Run it.
         with context as session:
@@ -290,11 +284,7 @@ class RunConfig:
 
             self.run_data.set(name=current_name, alpha=current_alpha)
             self.run_data.set(name=current_name, target=current_target)
-            self._logger.info("Plugin {}: alpha = {}, target = {}".format(
-                current_name,
-                current_alpha,
-                current_target)
-            )
+            self._logger.info("Plugin {}: alpha = {}, target = {}".format(current_name, current_alpha, current_target))
 
 
     def __converge(self):
@@ -304,8 +294,7 @@ class RunConfig:
         self.build_plugins(ConvergencePluginConfig())
         for plugin in self.__plugins:
             md.add_dependency(plugin)
-        context = gmx.context.ParallelArrayContext(
-            md, workdir_list=[os.getcwd()])
+        context = gmx.context.ParallelArrayContext(md, workdir_list=[os.getcwd()])
         with context as session:
             session.run()
 
@@ -318,11 +307,7 @@ class RunConfig:
         for name in self.__names:
             current_alpha = self.run_data.get('alpha', name=name)
             current_target = self.run_data.get('target', name=name)
-            self._logger.info("Plugin {}: alpha = {}, target = {}".format(
-                name,
-                current_alpha,
-                current_target)
-            )
+            self._logger.info("Plugin {}: alpha = {}, target = {}".format(name, current_alpha, current_target))
 
     def __production(self):
 
@@ -332,17 +317,14 @@ class RunConfig:
         # Calculate the time (in ps) at which the BRER iteration should finish.
         # This should be: the end time of the convergence run + the amount of time for
         # production simulation (specified by the user).
-        end_time = self.run_data.get('production_time') + self.run_data.get(
-            'start_time')
+        end_time = self.run_data.get('production_time') + self.run_data.get('start_time')
 
-        md = gmx.workflow.from_tpr(
-            self.tpr, end_time=end_time, append_output=False)
+        md = gmx.workflow.from_tpr(self.tpr, end_time=end_time, append_output=False)
 
         self.build_plugins(ProductionPluginConfig())
         for plugin in self.__plugins:
             md.add_dependency(plugin)
-        context = gmx.context.ParallelArrayContext(
-            md, workdir_list=[os.getcwd()])
+        context = gmx.context.ParallelArrayContext(md, workdir_list=[os.getcwd()])
         with context as session:
             session.run()
 
@@ -350,16 +332,13 @@ class RunConfig:
         for name in self.__names:
             current_alpha = self.run_data.get('alpha', name=name)
             current_target = self.run_data.get('target', name=name)
-            self._logger.info("Plugin {}: alpha = {}, target = {}".format(
-                name,
-                current_alpha,
-                current_target)
-            )
+            self._logger.info("Plugin {}: alpha = {}, target = {}".format(name, current_alpha, current_target))
 
 
 
     def run(self):
-
+        """Perform the MD simulations.
+        """
         phase = self.run_data.get('phase')
 
         self.__change_directory()
@@ -438,7 +417,7 @@ class RunConfig:
 
                         if self.A_parameter==1:
                             os.chdir("../convergence")
-                            self.__converge
+                            self.__converge()
                         else:
                             self.run_data.set(
                                 phase='training',
@@ -455,10 +434,7 @@ class RunConfig:
 
         else:
             self.__production()
-            self.run_data.set(
-                phase='training',
-                start_time=0,
-                iteration=(self.run_data.get('iteration') + 1))
+            self.run_data.set(phase='training', start_time=0, iteration=(self.run_data.get('iteration') + 1))
         self.run_data.save_config(self.state_json)
 
 

@@ -6,8 +6,8 @@ version: "= 0"
 # https://docs.travis-ci.com/user/common-build-problems/#Troubleshooting-Locally-in-a-Docker-Image
 
 os: linux
+dist: xenial
 language: cpp
-sudo: false
 
 # If we set 'ccache: true', Travis installs replacement ccache wrappers of system compilers, which we don't want,
 # so we'll do our own ccache management.
@@ -15,7 +15,6 @@ sudo: false
 # https://docs.travis-ci.com/user/caching/#Caches-and-build-matrices
 cache:
   pip: true
-  apt: true
   directories:
     # Note: if a cache store forks due to a stage with parallel jobs that Travis identifies as part of the same flow,
     # we must make sure that the parallel jobs do not write to any of the same caches. Also note that all stages use the
@@ -34,7 +33,7 @@ env:
 addons:
   apt:
     sources:
-    - ubuntu-toolchain-r-test
+    - sourceline: 'ppa:ubuntu-toolchain-r/test'
     packages:
     - cmake
     - cmake-data
@@ -58,6 +57,7 @@ before_install:
   - pyenv which python && export PYTHON=`pyenv which python`
   - source ./ci_scripts/set_compilers
 
+
 install:
   - export CCACHE_DIR=$HOME/.ccache_gromacs
   - ccache -s
@@ -74,7 +74,7 @@ before_script:
 
 script:
   - source $HOME/install/gromacs_2019/bin/GMXRC && ./ci_scripts/pygmx_0_0_7.sh
-  - ./ci_scripts/sample_restraint_brer.sh corr-struct
+  - ./ci_scripts/sample_restraint.sh
   - ./ci_scripts/run_brer.sh
 
 notifications:

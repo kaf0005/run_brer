@@ -64,7 +64,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+# docs/_build/
 
 # PyBuilder
 target/
@@ -105,3 +105,4 @@ venv.bak/
 
 # data
 .idea/
+.vscode

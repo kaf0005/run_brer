@@ -12,21 +12,23 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../'))
+
+import run_brer
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'Run BRER'
-copyright = '2018, Jennifer M. Hays'
+project = 'run BRER'
+copyright = '2019, Jennifer M. Hays'
 author = 'Jennifer M. Hays'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = '1.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -40,8 +42,13 @@ release = '0.0.1'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'numpydoc'
+    'sphinx.ext.autosummary',
+    'sphinx.ext.coverage',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.githubpages'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -66,7 +73,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
@@ -104,7 +111,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'RunBRERdoc'
+htmlhelp_basename = 'runBRERdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -131,7 +138,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'RunBRER.tex', 'Run BRER Documentation',
+    (master_doc, 'runBRER.tex', 'run BRER Documentation',
      'Jennifer M. Hays', 'manual'),
 ]
 
@@ -141,7 +148,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'runbrer', 'Run BRER Documentation',
+    (master_doc, 'runbrer', 'run BRER Documentation',
      [author], 1)
 ]
 
@@ -152,8 +159,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'RunBRER', 'Run BRER Documentation',
-     author, 'RunBRER', 'One line description of project.',
+    (master_doc, 'runBRER', 'run BRER Documentation',
+     author, 'runBRER', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -177,3 +184,14 @@ epub_exclude_files = ['search.html']
 
 
 # -- Extension configuration -------------------------------------------------
+autoclass_content = 'both'
+
+# -- Options for intersphinx extension ---------------------------------------
+
+# Example configuration for intersphinx: refer to the Python standard library.
+intersphinx_mapping = {'https://docs.python.org/': None}
+
+# -- Options for todo extension ----------------------------------------------
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = True

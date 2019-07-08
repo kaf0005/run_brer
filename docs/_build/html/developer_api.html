@@ -1,0 +1,687 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Developer API &mdash; run BRER 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="User API" href="user_api.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> run BRER
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="user_api.html">User API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Developer API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-run_brer.directory_helper">directory_helper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-run_brer.metadata">metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-run_brer.pair_data">pair_data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-run_brer.plugin_configs">plugin_configs</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">run BRER</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Developer API</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/developer_api.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="developer-api">
+<h1>Developer API<a class="headerlink" href="#developer-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-run_brer.directory_helper">
+<span id="directory-helper"></span><h2>directory_helper<a class="headerlink" href="#module-run_brer.directory_helper" title="Permalink to this headline">¶</a></h2>
+<p>Organizes the directory structure for BRER runs. Creates directories on the
+fly.</p>
+<dl class="simple">
+<dt>How the directory structure is organized:</dt><dd><ul class="simple">
+<li><p>This script should be run from your “top” directory (where
+you are planning to run all your ensemble members)</p></li>
+<li><p>The top directory contains ensemble member subdirectories
+This script is intended to handle just ONE ensemble member,
+so we’ll only be concerned with a single member subdirectory.</p></li>
+<li><p>The example below is for the first iteration (iter 0) of one
+of the members. Future iterations would go in directories
+1,2,…y</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="class">
+<dt id="run_brer.directory_helper.DirectoryHelper">
+<em class="property">class </em><code class="sig-prename descclassname">run_brer.directory_helper.</code><code class="sig-name descname">DirectoryHelper</code><span class="sig-paren">(</span><em class="sig-param">top_dir</em>, <em class="sig-param">param_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.directory_helper.DirectoryHelper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Small class for manipulating a standard directory structure for BRER
+runs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>top_dir</strong> – the path to the directory containing all the ensemble members.</p></li>
+<li><p><strong>param_dict</strong> – a dictionary specifying the ensemble number, the iteration,
+and the phase of the simulation.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; .
+&gt;&gt;&gt; ├── 0
+&gt;&gt;&gt; │   ├── converge_dist
+&gt;&gt;&gt; │   │   ├── state.cpt
+&gt;&gt;&gt; │   │   ├── state_prev.cpt
+&gt;&gt;&gt; │   │   └── traj_comp.part0001.xtc
+&gt;&gt;&gt; │   ├── production
+&gt;&gt;&gt; │   │   ├── confout.part0005.gro
+&gt;&gt;&gt; │   │   ├── state.cpt
+&gt;&gt;&gt; │   │   ├── state_prev.cpt
+&gt;&gt;&gt; │   │   ├── state_step4622560.cpt
+&gt;&gt;&gt; │   │   ├── traj_comp.part0002.xtc
+&gt;&gt;&gt; │   └── training
+&gt;&gt;&gt; │       ├── state.cpt
+&gt;&gt;&gt; │       ├── state_prev.cpt
+&gt;&gt;&gt; │       └── traj_comp.part0001.xtc
+&gt;&gt;&gt; ├── state.json
+&gt;&gt;&gt; ├── submit.slurm
+&gt;&gt;&gt; └── syx.tpr
+</pre></div>
+</div>
+<dl class="method">
+<dt id="run_brer.directory_helper.DirectoryHelper.build_working_dir">
+<code class="sig-name descname">build_working_dir</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.directory_helper.DirectoryHelper.build_working_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks to see if the working directory for current state of BRER
+simulation exists. If it does not, creates the directory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.directory_helper.DirectoryHelper.change_dir">
+<code class="sig-name descname">change_dir</code><span class="sig-paren">(</span><em class="sig-param">level</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.directory_helper.DirectoryHelper.change_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change to directory specified by level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>level</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – How far to go down the directory tree.
+Can be one of ‘top’, ‘ensemble_num’, ‘iteration’, or ‘phase’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.directory_helper.DirectoryHelper.get_dir">
+<code class="sig-name descname">get_dir</code><span class="sig-paren">(</span><em class="sig-param">level</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.directory_helper.DirectoryHelper.get_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the directory for however far you want to go down the directory
+tree.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>level</strong> – one of ‘top’, ‘ensemble_num’, ‘iteration’, or ‘phase’.
+See the directory structure example provided at the beginning of this class.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the path to the specified directory ‘level’ as a str.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.7)">type</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-run_brer.metadata">
+<span id="metadata"></span><h2>metadata<a class="headerlink" href="#module-run_brer.metadata" title="Permalink to this headline">¶</a></h2>
+<p>Abstract class for handling all BRER metadata.</p>
+<p>State and PairData classes inherit from this class.</p>
+<dl class="class">
+<dt id="run_brer.metadata.MetaData">
+<em class="property">class </em><code class="sig-prename descclassname">run_brer.metadata.</code><code class="sig-name descname">MetaData</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MetaData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct metadata object. and give it a name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> – Give your MetaData class a descriptive name.</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="run_brer.metadata.MetaData.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param">key</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MetaData.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the value of a parameter of the class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – The name of the parameter you wish to get.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The value of the parameter associated with the key.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.7)">type</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MetaData.get_as_dictionary">
+<code class="sig-name descname">get_as_dictionary</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MetaData.get_as_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all of the current parameters of the class as a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>dictionary of class parameters</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MetaData.get_missing_keys">
+<code class="sig-name descname">get_missing_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MetaData.get_missing_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets all of the required parameters that have not been set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of required parameter names that have not been set.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)">list</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MetaData.get_requirements">
+<code class="sig-name descname">get_requirements</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MetaData.get_requirements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the set of required parameters for the class. This is quite
+useful for checking if there are any missing parameters before
+beginning a run.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>required parameters of the class</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)">list</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MetaData.name">
+<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#run_brer.metadata.MetaData.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>getter for name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MetaData.set">
+<code class="sig-name descname">set</code><span class="sig-paren">(</span><em class="sig-param">key=None</em>, <em class="sig-param">value=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MetaData.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a parameter of the class. Checks whether or not the parameter
+is required and reports information about requirements. You can pass
+the key,value pairs either as a key and value or as a set of <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>optional</em>) – parameter name, by default None</p></li>
+<li><p><strong>value</strong> (<em>any</em><em>, </em><em>optional</em>) – parameter value, by default None</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MetaData.set_from_dictionary">
+<code class="sig-name descname">set_from_dictionary</code><span class="sig-paren">(</span><em class="sig-param">data: dict</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MetaData.set_from_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Another method that essentially performs the same thing as “set”,
+but just takes a dictionary. Probably should be deprecated…</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) – A dictionary of parameter names and values to set.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MetaData.set_requirements">
+<code class="sig-name descname">set_requirements</code><span class="sig-paren">(</span><em class="sig-param">list_of_requirements: list</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MetaData.set_requirements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines a set of required parameters for the class. This is quite
+useful for checking if there are any missing parameters before
+beginning a run.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>list_of_requirements</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) – list of required parameters for the class (a list of strings)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="run_brer.metadata.MultiMetaData">
+<em class="property">class </em><code class="sig-prename descclassname">run_brer.metadata.</code><code class="sig-name descname">MultiMetaData</code><a class="headerlink" href="#run_brer.metadata.MultiMetaData" title="Permalink to this definition">¶</a></dt>
+<dd><p>A single class that handles multiple MetaData classes (useful when
+restraining multiple atom-atom pairs).</p>
+<dl class="method">
+<dt id="run_brer.metadata.MultiMetaData.add_metadata">
+<code class="sig-name descname">add_metadata</code><span class="sig-paren">(</span><em class="sig-param">metadata: run_brer.metadata.MetaData</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MultiMetaData.add_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends new MetaData object to self._metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>metadata</strong> (<a class="reference internal" href="#run_brer.metadata.MetaData" title="run_brer.metadata.MetaData"><em>MetaData</em></a>) – metadata to append</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MultiMetaData.id_to_name">
+<code class="sig-name descname">id_to_name</code><span class="sig-paren">(</span><em class="sig-param">id</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MultiMetaData.id_to_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the index of one of the MetaData classes to it’s associated
+name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – The index of the MetaData class in the list self._metadata</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the name of the metadata class</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MultiMetaData.name_to_id">
+<code class="sig-name descname">name_to_id</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MultiMetaData.name_to_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the name of one of the MetaData classes to it’s associated
+list index (it’s idx in self._metadata)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – the name of a MetaData class.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the index of the MetaData class in the self._metadata list.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)">int</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#IndexError" title="(in Python v3.7)"><strong>IndexError</strong></a> – Raise IndexError if no metadata have been loaded.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MultiMetaData.names">
+<em class="property">property </em><code class="sig-name descname">names</code><a class="headerlink" href="#run_brer.metadata.MultiMetaData.names" title="Permalink to this definition">¶</a></dt>
+<dd><p>getter for names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>list of names</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)">list</a></p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#IndexError" title="(in Python v3.7)"><strong>IndexError</strong></a> – Raise IndexError if no metadata have been loaded.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MultiMetaData.read_from_json">
+<code class="sig-name descname">read_from_json</code><span class="sig-paren">(</span><em class="sig-param">filename='state.json'</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MultiMetaData.read_from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads state from json.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – (Default value = ‘state.json’)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.metadata.MultiMetaData.write_to_json">
+<code class="sig-name descname">write_to_json</code><span class="sig-paren">(</span><em class="sig-param">filename='state.json'</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.metadata.MultiMetaData.write_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes state to json.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – (Default value = ‘state.json’)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-run_brer.pair_data">
+<span id="pair-data"></span><h2>pair_data<a class="headerlink" href="#module-run_brer.pair_data" title="Permalink to this headline">¶</a></h2>
+<p>Classes to handle 1) pair metadata 2) resampling from DEER distributions at
+each new BRER iteration.</p>
+<dl class="class">
+<dt id="run_brer.pair_data.PairData">
+<em class="property">class </em><code class="sig-prename descclassname">run_brer.pair_data.</code><code class="sig-name descname">PairData</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.pair_data.PairData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to handle pair metadata (distribution, bins, atom ids)</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="run_brer.pair_data.MultiPair">
+<em class="property">class </em><code class="sig-prename descclassname">run_brer.pair_data.</code><code class="sig-name descname">MultiPair</code><a class="headerlink" href="#run_brer.pair_data.MultiPair" title="Permalink to this definition">¶</a></dt>
+<dd><p>Single class for handling multiple pair data.</p>
+<p>Handles resampling of targets.</p>
+<dl class="method">
+<dt id="run_brer.pair_data.MultiPair.re_sample">
+<code class="sig-name descname">re_sample</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.pair_data.MultiPair.re_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-sample from the joint space. Do normalization just in case the
+data aren’t normalized already.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>dictionary of targets, drawn from DEER distributions.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.pair_data.MultiPair.read_from_json">
+<code class="sig-name descname">read_from_json</code><span class="sig-paren">(</span><em class="sig-param">filename='state.json'</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.pair_data.MultiPair.read_from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads pair data from json file. For an example file, see
+pair_data.json in the data directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>optional</em>) – filename of the pair data, by default ‘state.json’</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-run_brer.plugin_configs">
+<span id="plugin-configs"></span><h2>plugin_configs<a class="headerlink" href="#module-run_brer.plugin_configs" title="Permalink to this headline">¶</a></h2>
+<p>Classes used to build gmxapi plugins for all phases of a BRER iteration Each
+class corresponds to ONE restraint since gmxapi plugins each correspond to one
+restraint.</p>
+<dl class="class">
+<dt id="run_brer.plugin_configs.PluginConfig">
+<em class="property">class </em><code class="sig-prename descclassname">run_brer.plugin_configs.</code><code class="sig-name descname">PluginConfig</code><a class="headerlink" href="#run_brer.plugin_configs.PluginConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract class used to build training, convergence, and production
+plugins.</p>
+<dl class="method">
+<dt id="run_brer.plugin_configs.PluginConfig.build_plugin">
+<em class="property">abstract </em><code class="sig-name descname">build_plugin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.plugin_configs.PluginConfig.build_plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract method for building a plugin.</p>
+<p>To be determined by the phase of the simulation (training,
+convergence, production)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.plugin_configs.PluginConfig.scan_dictionary">
+<code class="sig-name descname">scan_dictionary</code><span class="sig-paren">(</span><em class="sig-param">dictionary</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.plugin_configs.PluginConfig.scan_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scans a dictionary and stores whatever parameters it needs for the
+build_plugin.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dictionary</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) – a dictionary containing metadata, some of which may be needed for the run.
+The dictionary may contain <em>extra</em> data, i.e., this can be a superset of the
+needed plugin data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="run_brer.plugin_configs.PluginConfig.scan_metadata">
+<code class="sig-name descname">scan_metadata</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.plugin_configs.PluginConfig.scan_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>This scans a RunData or PairData obj and stores whatever parameters
+it needs for a run.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> – either type RunData or type PairData</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="run_brer.plugin_configs.TrainingPluginConfig">
+<em class="property">class </em><code class="sig-prename descclassname">run_brer.plugin_configs.</code><code class="sig-name descname">TrainingPluginConfig</code><a class="headerlink" href="#run_brer.plugin_configs.TrainingPluginConfig" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="run_brer.plugin_configs.TrainingPluginConfig.build_plugin">
+<code class="sig-name descname">build_plugin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.plugin_configs.TrainingPluginConfig.build_plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds training phase plugin for BRER simulations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a gmxapi WorkElement to be added to the workflow graph</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>WorkElement</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#KeyError" title="(in Python v3.7)"><strong>KeyError</strong></a> – if required parameters for building the plugin are missing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="run_brer.plugin_configs.ConvergencePluginConfig">
+<em class="property">class </em><code class="sig-prename descclassname">run_brer.plugin_configs.</code><code class="sig-name descname">ConvergencePluginConfig</code><a class="headerlink" href="#run_brer.plugin_configs.ConvergencePluginConfig" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="run_brer.plugin_configs.ConvergencePluginConfig.build_plugin">
+<code class="sig-name descname">build_plugin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.plugin_configs.ConvergencePluginConfig.build_plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds convergence phase plugin for BRER simulations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a gmxapi WorkElement to be added to the workflow graph</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>WorkElement</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#KeyError" title="(in Python v3.7)"><strong>KeyError</strong></a> – if required parameters for building the plugin are missing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="run_brer.plugin_configs.ProductionPluginConfig">
+<em class="property">class </em><code class="sig-prename descclassname">run_brer.plugin_configs.</code><code class="sig-name descname">ProductionPluginConfig</code><a class="headerlink" href="#run_brer.plugin_configs.ProductionPluginConfig" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="run_brer.plugin_configs.ProductionPluginConfig.build_plugin">
+<code class="sig-name descname">build_plugin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#run_brer.plugin_configs.ProductionPluginConfig.build_plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds production phase plugin for BRER simulations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a gmxapi WorkElement to be added to the workflow graph</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>WorkElement</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#KeyError" title="(in Python v3.7)"><strong>KeyError</strong></a> – if required parameters for building the plugin are missing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="user_api.html" class="btn btn-neutral float-left" title="User API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Jennifer M. Hays
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
