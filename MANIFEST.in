@@ -1,0 +1,2 @@
+include versioneer.py
+include run_brer/_version.py

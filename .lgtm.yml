@@ -1,0 +1,7 @@
+extraction:
+  python:
+    index:
+      filters:
+        - exclude: "**/versioneer.py"
+        - exclude: "**/setup.py"
+        - exclude: "**/run_brer/_version.py"
