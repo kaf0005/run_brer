@@ -180,7 +180,7 @@ class Analysis:
                     self.__binSet()
                     self.__analysisLog()
                 else:
-                    print("There is no convergence file for the current iteration:")
+                    print("There is no convergence folder for the current iteration:")
                     print(path)
                     print("You may need to do another ./run.py to continue that run.")
                     print("\n")
