@@ -8,12 +8,13 @@ import sys
 
 
 init = {
-    'ensemble_dir': '/home/kaf0005/KF2019REU/jmh_dc3_runs',
-    'pairs_json': '/home/kaf0005/KF2019REU/syntaxin_files/pair_data.json',
-    'analysis_dir': '/home/kaf0005/KF2019REU/analysis',
-    'n':[1,2,3,4],
-    'm':[1,2]
-        }
+    'ensemble_dir': '/home/kaf0005/UVA_reu/test-brer',
+    'pairs_json': '/home/kaf0005/UVA_reu/analysis/pair_data.json',
+    'analysis_dir': '/home/kaf0005/UVA_reu/analysis',
+    'n':[1,2,3],
+    'm':[0,1]
+}
+
 
 
 config = ms.Analysis(**init)
