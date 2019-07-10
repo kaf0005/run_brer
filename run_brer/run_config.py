@@ -11,6 +11,8 @@ import logging
 import gmx
 import json
 import numpy as np
+import string 
+from array import array 
 # import atexit
 
 
@@ -178,11 +180,14 @@ class RunConfig:
                 self.run_data.from_dictionary(json.load(open(self.state_json)))
             corr_target=[]
             count=0
+            names=[]
             for name in self.__names:
                 corr_target.append(self.run_data.get('target', name=name))
                 self.run_data.set(name=name, target=corr_target[count])
+                names.append(name)
+                names.append(corr_target[count])
                 count=count+1
-            self._logger.info('Old targets: {}'.format(corr_target))
+            self._logger.info('Old targets: {}'.format(names))
             self.run_data.save_config(fnm=self.state_json)
         
         else:
@@ -387,7 +392,7 @@ class RunConfig:
                         f=f.replace('\t',',')
                         f=np.matrix(f)
                         sample_count=f[0,2]
-                        if sample_count >0:
+                        if sample_count >400:
                             self.A_parameter=0
                             A=self.run_data.get('A', name=name)
                             corr_R = f[0,1]
@@ -455,6 +460,7 @@ class RunConfig:
                                 phase='training',
                                 start_time=0,
                                 iteration=(self.run_data.get('iteration')))
+                                self.run()
                       
 
                 else:
