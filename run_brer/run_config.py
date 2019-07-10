@@ -364,7 +364,7 @@ class RunConfig:
             self.__train()
             self.run_data.set(phase='convergence')
             self.A_parameter=1
-            self.run
+           
 
         elif phase == 'convergence':
 
@@ -448,14 +448,14 @@ class RunConfig:
                             self.__change_directory()
                             self.__converge()
                             self.run_data.set(phase='convergence') 
-                            self.run() 
+                          
                           
                         else:
                             self.run_data.set(
                                 phase='training',
                                 start_time=0,
                                 iteration=(self.run_data.get('iteration')))
-                            self.run() 
+                      
 
                 else:
                     # The training phase should always start normally, so there has to be log files
@@ -464,7 +464,7 @@ class RunConfig:
                         phase='training',
                         start_time=0,
                         iteration=(self.run_data.get('iteration')))
-                    self.run() 
+              
 
         else:
             self.__production()
