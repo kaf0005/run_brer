@@ -183,8 +183,8 @@ class RunConfig:
             self.__move_cpt()
 
             #self.run_data.save_config(fnm=self.state_json)'
-                if os.path.exists(self.state_json):
-                    self.run_data.from_dictionary(json.load(open(self.state_json)))
+            if os.path.exists(self.state_json):
+                self.run_data.from_dictionary(json.load(open(self.state_json)))
             #do nothing and use the old cpt file for the original targets
 
 
