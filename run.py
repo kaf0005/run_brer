@@ -10,8 +10,9 @@ import sys
 init = {
     'tpr': '/home/kaf0005/KF2019REU/syntaxin_files/syx.tpr',
     'ensemble_dir': '/home/kaf0005/KF2019REU/jmh_dc3_runs',
-    'ensemble_num': 15,
-    'pairs_json': '/home/kaf0005/KF2019REU/syntaxin_files/pair_data.json'
+    'ensemble_num': 23,
+    'pairs_json': '/home/kaf0005/KF2019REU/syntaxin_files/pair_data.json',
+    'dat_dir': '/home/kaf0005/KF2019REU/dat_dir'
 }
 
 

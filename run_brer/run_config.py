@@ -20,9 +20,10 @@ class RunConfig:
     def __init__(self,
                  tpr,
                  ensemble_dir,
+                 dat_dir,
                  ensemble_num=1,
                  pairs_json='pair_data.json',
-                 A_parameter=[],
+                 A_parameter=0,
                  ):
         """The run configuration specifies the files and directory structure
         used for the run. It determines whether the run is in the training,
@@ -45,7 +46,9 @@ class RunConfig:
 
         self.tpr = tpr
         self.ens_dir = ensemble_dir
-        self.A_parameter = 1
+        self.dat_dir=dat_dir
+        self.A_parameter = 0
+
 
         # a list of identifiers of the residue-residue pairs that will be restrained
         self.__names = []
@@ -164,7 +167,26 @@ class RunConfig:
 
     def __train(self):
         # This is checking to see if the training run was abruptly stopped and if so, restarting with original targets
-        if self.A_parameter ==1:
+        current_iter = self.run_data.get('iteration')
+        ens_num = self.run_data.get('ensemble_num')
+        ens_dir=self.ens_dir
+        cpt = '{}/state.cpt'.format(os.getcwd())
+
+        if os.path.isfile(cpt) and self.A_parameter==0:
+            path="{}/mem_{}/{}/convergence".format(ens_dir, ens_num, current_iter)  
+            if os.path.exists(path):
+                self.run_data.from_dictionary(json.load(open(self.state_json)))
+            corr_target=[]
+            count=0
+            for name in self.__names:
+                corr_target.append(self.run_data.get('target', name=name))
+                self.run_data.set(name=name, target=corr_target[count])
+                count=count+1
+            self._logger.info('Old targets: {}'.format(corr_target))
+            self.run_data.save_config(fnm=self.state_json)
+        
+        else:
+            self.A_parameter=1
             # do re-sampling
             targets = self.pairs.re_sample()
             self._logger.info('New targets: {}'.format(targets))
@@ -173,25 +195,14 @@ class RunConfig:
 
             # save the new targets to the BRER checkpoint file.
             self.run_data.save_config(fnm=self.state_json)
-        else:
-            #reload old targets
-            #for name in self.__names:
-            #    self.run_data.get(name=name, target=targets[name])
-
-            #self.run_data.save_config(fnm=self.state_json)
-            #pass #do nothing and use the old cpt file for the original targets
-            self.__move_cpt()
-
-            #self.run_data.save_config(fnm=self.state_json)'
-            if os.path.exists(self.state_json):
-                self.run_data.from_dictionary(json.load(open(self.state_json)))
-            #do nothing and use the old cpt file for the original targets
-
+    
 
         # This is going through the .dat files I generated in def__run, this is the memory storage of A
+        count=0
         for name in self.__names:
-            namedat_reject=str(name)+'_reject.dat'
-            namedat=str(name)+'.dat'
+            namedat_reject="{}_reject.dat".format(name)
+            namedat="{}.dat".format(name)
+            os.chdir(self.dat_dir)
             if namedat in os.getcwd():
                 with open(namedat, "r") as g:
                     lines=g.readlines()[1:]
@@ -202,7 +213,7 @@ class RunConfig:
                 data=np.matrix(lines)
                 possible_target = data[:,0]
                 possible_target=np.array(possible_target)
-                current_target= targets[name]
+                current_target= corr_target(count)
                 if current_target in possible_target:
                     target_index =   np.where(possible_target==current_target)
                     A = data[target_index,1]
@@ -219,7 +230,8 @@ class RunConfig:
                             data=np.matrix(lines)
                             possible_target = data[:,1]
                             possible_target=np.array(possible_target)
-                            current_target= targets[name]
+                            current_target= corr_target(count)
+                            count=count+1
                             if current_target in possible_target:
                                 target_index =   np.where(possible_target==current_target)
                                 A1 = data[target_index,2]
@@ -239,6 +251,9 @@ class RunConfig:
 
         # backup existing checkpoint.
         # TODO: Don't backup the cpt, actually use it!!
+        path="{}/mem_{}/{}/training".format(ens_dir,ens_num,current_iter)
+        os.chdir(path)
+
         cpt = '{}/state.cpt'.format(os.getcwd())
 
         if self.A_parameter==1:
@@ -249,11 +264,13 @@ class RunConfig:
                 )
                 shutil.move(cpt, '{}.bak'.format(cpt))
         else:
-             if os.path.exists(cpt):
+            path="{}/mem_{}/{}/convergence".format(ens_dir, ens_num, current_iter )
+            if os.path.exists(path):
                 self._logger.warning(
                     'There is a checkpoint file in your current working directory; however you are '
-                    'training with original targets. The cpt will NOT  be backed up and the run will start over with new targets'
+                    'training with original targets. The cpt will be backed up and the run will start over with original targets'
                 )
+                shutil.move(cpt, '{}.bak'.format(cpt))
 
         # Set up a dictionary to go from plugin name -> restraint name
         sites_to_name = {}
@@ -346,34 +363,42 @@ class RunConfig:
         if phase == 'training':
             self.__train()
             self.run_data.set(phase='convergence')
+            self.A_parameter=1
+            self.run
 
         elif phase == 'convergence':
 
             # Checking if training for alpha for all restraints was completed within 20ns, and if so, the target and its corresponding A-value are recorded in a .dat
             # for future use, and the covergence run follows.
 
-            self.A_parameter=1
-            for name in self.__names:
-                namelog=name +'.log'
-                os.chdir("../training")
+            self.corr_target=[]
+            current_iter = self.run_data.get('iteration')
+            ens_num = self.run_data.get('ensemble_num')
+            ens_dir=self.ens_dir
 
-                if os.path.exists(namelog):
+            for name in self.__names:
+                namelog="{}.log".format(name)
+                path="{}/mem_{}/{}/training".format(ens_dir,ens_num, current_iter)
+                os.chdir(path)
+
+                if os.path.isfile(namelog):
                     with open(namelog) as openfile:
-                        f=openfile.readlines()
-                        f=f[-1]
+                        f=openfile.readlines()[-1]
                         f=f.replace('\t',',')
                         f=np.matrix(f)
                         sample_count=f[0,2]
-                        if sample_count >400:
+                        if sample_count >0:
                             self.A_parameter=0
                             A=self.run_data.get('A', name=name)
                             corr_R = f[0,1]
-                            corr_target = f[0,3]
+                            corr_target= f[0,3]
+                            self.corr_target.append(corr_target)
                             corr_A  = self.run_data.get('A',name=name)
                             A=1.1*A
 
                             self.run_data.set(A=A, name=name)
-                            namedat=str(name)+'_reject.dat'
+                            namedat="{}_reject.dat".format(name)
+                            os.chdir(self.dat_dir)
                             if namedat in os.getcwd():
                                 with open(namedat,"a+") as g:
                                     g.write('%f' % corr_R)
@@ -397,8 +422,10 @@ class RunConfig:
                         else:
                             corr_R = f[0,1]
                             corr_target = f[0,3]
+                            #self.corr_target.append(corr_target)
                             corr_A  = self.run_data.get('A',name=name)
-                            namedat=str(name)+'.dat'
+                            namedat="{}.dat".format(name)
+                            os.chdir(self.dat_dir)
                             if namedat in os.getcwd():
                                 with open(namedat,"a+") as g:
                                     g.write('%f' % corr_target)
@@ -416,13 +443,19 @@ class RunConfig:
                                 g.close()
 
                         if self.A_parameter==1:
-                            os.chdir("../convergence")
+                            self.run_data.set(phase='convergence')
+                            phase = self.run_data.get('phase')
+                            self.__change_directory()
                             self.__converge()
+                            self.run_data.set(phase='convergence') 
+                            self.run() 
+                          
                         else:
                             self.run_data.set(
                                 phase='training',
                                 start_time=0,
                                 iteration=(self.run_data.get('iteration')))
+                            self.run() 
 
                 else:
                     # The training phase should always start normally, so there has to be log files
@@ -431,6 +464,7 @@ class RunConfig:
                         phase='training',
                         start_time=0,
                         iteration=(self.run_data.get('iteration')))
+                    self.run() 
 
         else:
             self.__production()
