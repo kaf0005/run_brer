@@ -460,7 +460,7 @@ class RunConfig:
                                 phase='training',
                                 start_time=0,
                                 iteration=(self.run_data.get('iteration')))
-                                self.run()
+                            self.run()
                       
 
                 else:
