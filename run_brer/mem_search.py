@@ -117,22 +117,22 @@ class Analysis:
 
     
 
-    def __binSet(self): 
-        data=self.data
-        W_matrix=self.W_matrix
-        W_matrix=np.matrix(W_matrix)
-        name_dict=str(data[0,1])+"_"+str(data[1,1])+"_"+str(data[2,1])+".dat"
-        path="{}/workCalc".format(self.analysis_dir) #training directory
-        os.chdir(path)
-        if name_dict in os.getcwd() :
-            with open(name_dict,"a+") as g:                
-                g.write(str(W_matrix))
-          
-        else: 
-            with open(name_dict,"w+") as g:
-                g.write("Work for each DEER distribution in kJ\n")
-                g.write(str(W_matrix))
-          
+    def __datDict(self):         
+        # Reads in dictionary, if there are no values it sets up the nested dictionary
+        with open('{}/targetSet.json'.format(self.analysis_dir), "w+") as f:
+            try:
+                dict=json.load(f)
+            except ValueError:
+                dict={}
+            targetSet=self.data
+            targetSet=targetSet[:,0]
+            k=len(targetSet)
+            k=k-1
+            for i in range(0,k)
+                dict[str(targetSet[i])]={}
+                dict=dict[str(targetSet[i])]
+            dict[str(targetSet[k])]=[self.W_matrix]
+                     
 
     def __analysisLog(self):
         path=('{}/mem_{}/{}'.format(self.ensemble_dir,self.n,self.m))
