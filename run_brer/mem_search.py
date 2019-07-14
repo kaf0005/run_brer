@@ -7,10 +7,15 @@ import json
 import numpy as np 
 import sys
 import datetime
+import codecs
+
 
 class Analysis: 
 
     def __init__(self,
+                tpr,
+                index_file,
+                select,
                 ensemble_dir,
                 analysis_dir,
                 n,
@@ -21,7 +26,9 @@ class Analysis:
                 distance_values=[],
                 end_signal=[]
                 ):
-
+        self.tpr=tpr
+        self.index_file=index_file
+        self.select=select
         self.ensemble_dir=ensemble_dir
         self.analysis_dir=analysis_dir
         self.n=n
@@ -33,7 +40,7 @@ class Analysis:
         self.state_json = '{}/mem_{}/state.json'.format(self.ensemble_dir,self.n)
         self.data=[]
         self.W_matrix=[]
-        self.distance_values=distance_values
+        self.distance_values=[]
         self.end_signal=0
 
     def __gromacs(self):
@@ -52,8 +59,12 @@ class Analysis:
             gromacs.trjcat(f=traj, o = combined_traj)
             path="{}".format(self.analysis_dir)
             os.chdir(path) #analysis directory
-            gromacs.distance(f="combined_traj.xtc", s="syx.tpr", n="beta_carbon_index.ndx", oall="distance.xvg", select=[19, 20, 21])
-        
+            path=self.index_file
+            if os.path.exists(path):
+                gromacs.distance(f="combined_traj.xtc", s=self.tpr, n=self.index_file, oall="distance.xvg", select=self.select)
+            else: 
+                gromacs.distance(f="combined_traj.xtc", s=self.tpr, oall="distance.xvg")
+                
 
     def __awk(self):
         path="{}".format(self.analysis_dir)
@@ -69,12 +80,12 @@ class Analysis:
             data=data.strip(',;')
         distance_values = np.matrix(data)
         self.distance_values=distance_values
-        #os.remove("distance.xvg")
-        #os.remove("combined_traj.xtc")
+        os.remove("distance.xvg")
+        os.remove("combined_traj.xtc")
     
 
     def __logData(self):
-        save_data=np.zeros((3,3))
+        save_data=[]
         count=0
         path="{}/mem_{}/{}/training".format(self.ensemble_dir, self.n, self.m) #training directory
         os.chdir(path)
@@ -83,11 +94,12 @@ class Analysis:
                 data=f.readlines()[-1]
                 data=data.replace(' ',',')
                 data=np.matrix(data)
-                save_data[count,2]=data[0,5] #alpha
-                save_data[count,0]=data[0,3] #target
-                save_data[count,1]=data[0,2] #R
+                save_data.append(data[0,2]) 
+                save_data.append(data[0,1]) 
+                save_data.append(data[0,4]) 
                 count=count+1
-            self.data=save_data
+        save_data=np.matrix(save_data)    
+        self.data=save_data
            
     
     def __workCalc(self):
@@ -102,9 +114,9 @@ class Analysis:
         for i in range (0,n):
             Sum1=data[0,2]*(distance_values[i+1,1]-distance_values[i,1])
             W_DEER1 =W_DEER1+Sum1
-            Sum2=data[1,2]*(distance_values[i+1,2]-distance_values[i,2])
+            Sum2=data[0,5]*(distance_values[i+1,2]-distance_values[i,2])
             W_DEER2=W_DEER2+Sum2
-            Sum3=data[2,2]*(distance_values[i+1,3]-distance_values[i,3])
+            Sum3=data[0,8]*(distance_values[i+1,3]-distance_values[i,3])
             W_DEER3=W_DEER3+Sum3
 
             W_DEER1=(W_DEER1)*1e-12
@@ -119,20 +131,32 @@ class Analysis:
 
     def __datDict(self):         
         # Reads in dictionary, if there are no values it sets up the nested dictionary
-        with open('{}/targetSet.json'.format(self.analysis_dir), "w+") as f:
-            try:
+        data=self.data
+        targetSet='{:2f}_{:2f}_{:2f}'.format(data[0,0],data[0,3],data[0,6])
+        workCalc=np.sum(self.W_matrix)
+        path = '{}/targetSet.json'.format(self.analysis_dir)
+        if os.path.exists(path):
+            with open('{}/targetSet.json'.format(self.analysis_dir), "r+") as f:
                 dict=json.load(f)
-            except ValueError:
-                dict={}
-            targetSet=self.data
-            targetSet=targetSet[:,0]
-            k=len(targetSet)
-            k=k-1
-            for i in range(0,k)
-                dict[str(targetSet[i])]={}
-                dict=dict[str(targetSet[i])]
-            dict[str(targetSet[k])]=[self.W_matrix]
-                     
+                if '{}'.format(targetSet) in dict:
+                    values=dict.get('{}'.format(targetSet))
+                    values="{},{}".format(values,workCalc)
+                    values=np.array(values)
+                    d={'{}'.format(targetSet):'{}'.format(values)}
+                    dict.update(d)
+                else:
+                    d={'{}'.format(targetSet):workCalc}
+                    dict.update(d)
+            with open('{}/targetSet.json'.format(self.analysis_dir), "r+") as f:
+                j=json.dumps(dict)
+                f.write(j)        
+        else:
+            dict={}
+            d={'{}'.format(targetSet):workCalc}
+            dict.update(d)
+        with open('{}/targetSet.json'.format(self.analysis_dir), "w") as f:
+            j=json.dumps(dict)
+            f.write(j)      
 
     def __analysisLog(self):
         path=('{}/mem_{}/{}'.format(self.ensemble_dir,self.n,self.m))
@@ -151,7 +175,7 @@ class Analysis:
             for j in m:
                 self.n=i
                 self.m=j
-                path="{}/mem_{}/{}/convergence".format(self.ensemble_dir,self.n,self.m)
+                path="{}/mem_{}/{}/convergence/md.part0001.log".format(self.ensemble_dir,self.n,self.m)
                 if os.path.exists(path):
                     exists=os.path.isfile('{}/mem_{}/{}/analysis.log'.format(self.ensemble_dir,self.n,self.m))
                     if exists:
@@ -161,26 +185,23 @@ class Analysis:
                         print("please delete the analysis.log file within the iteration directory.")
                         print("\n")
                         break 
-        
-                    if exists:
-                        self.end_signal==1
                     else:   
                         self.__gromacs()
-                    if self.end_signal==1:
-                        print("There were no xtc files found in the following mem_directory:")
-                        cwd=os.getcwd()
-                        print(cwd)
-                        print("You may need to do another ./run.py to continue that run.")
-                        print("\n")
-                        break
+                        if self.end_signal==1:
+                            print("There were no xtc files found in the following mem_directory:")
+                            cwd=os.getcwd()
+                            print(cwd)
+                            print("You may need to do another ./run.py to continue that run.")
+                            print("\n")
+                            break
 
-                    self.__awk()
-                    self.__logData()
-                    self.__workCalc()
-                    self.__binSet()
-                    self.__analysisLog()
+                        self.__awk()
+                        self.__logData()
+                        self.__workCalc()
+                        self.__datDict()
+                        self.__analysisLog()
                 else:
-                    print("There is no convergence folder for the current iteration:")
+                    print("There are no md log files in the convergence folder for the current iteration:")
                     print(path)
                     print("You may need to do another ./run.py to continue that run.")
                     print("\n")
