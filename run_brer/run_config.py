@@ -11,8 +11,6 @@ import logging
 import gmx
 import json
 import numpy as np
-import string 
-from array import array 
 # import atexit
 
 
@@ -22,10 +20,11 @@ class RunConfig:
     def __init__(self,
                  tpr,
                  ensemble_dir,
-                 dat_dir,
+                 dict_json,
                  ensemble_num=1,
                  pairs_json='pair_data.json',
-                 A_parameter=0,
+                 A_parameter=[],
+                 retrain_count=0
                  ):
         """The run configuration specifies the files and directory structure
         used for the run. It determines whether the run is in the training,
@@ -48,8 +47,9 @@ class RunConfig:
 
         self.tpr = tpr
         self.ens_dir = ensemble_dir
-        self.dat_dir=dat_dir
-        self.A_parameter = 0
+        self.dict_json=dict_json
+        self.A_parameter = []
+        self.retrain_count=0
 
 
         # a list of identifiers of the residue-residue pairs that will be restrained
@@ -65,9 +65,10 @@ class RunConfig:
 
         self.run_data = RunData()
         self.run_data.set(ensemble_num=ensemble_num)
-
+    
         self.state_json = '{}/mem_{}/state.json'.format(ensemble_dir, self.run_data.get('ensemble_num'))
-        # If we're in the middle of a run, load the BRER checkpoint file and continue from
+        # If we're in the middle of a run, 
+        #  the BRER checkpoint file and continue from
         # the current state.
         if os.path.exists(self.state_json):
             self.run_data.from_dictionary(json.load(open(self.state_json)))
@@ -167,115 +168,52 @@ class RunConfig:
                 gmx_cpt = '{}/{}/convergence/state.cpt'.format(member_dir, current_iter)
                 shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
 
-    def __train(self):
-        # This is checking to see if the training run was abruptly stopped and if so, restarting with original targets
+    def __move_dict(self):
+
         current_iter = self.run_data.get('iteration')
+        prev_iter=current_iter-1
         ens_num = self.run_data.get('ensemble_num')
+        prev_ens_num=ens_num -1
         ens_dir=self.ens_dir
-        cpt = '{}/state.cpt'.format(os.getcwd())
-
-        if os.path.isfile(cpt) and self.A_parameter==0:
-            path="{}/mem_{}/{}/convergence".format(ens_dir, ens_num, current_iter)  
-            if os.path.exists(path):
-                self.run_data.from_dictionary(json.load(open(self.state_json)))
-            corr_target=[]
-            count=0
-            names=[]
-            for name in self.__names:
-                corr_target.append(self.run_data.get('target', name=name))
-                self.run_data.set(name=name, target=corr_target[count])
-                names.append(name)
-                names.append(corr_target[count])
-                count=count+1
-            self._logger.info('Old targets: {}'.format(names))
-            self.run_data.save_config(fnm=self.state_json)
         
-        else:
-            self.A_parameter=1
-            # do re-sampling
-            targets = self.pairs.re_sample()
-            self._logger.info('New targets: {}'.format(targets))
-            for name in self.__names:
-                self.run_data.set(name=name, target=targets[name])
+        if self.dict_json==0:
+            if os.path.exists('{}/mem_{}/dict.json'.format(ens_dir,ens_num)):
+                self._logger.info("Dictionary already exists: not moving any files")
 
-            # save the new targets to the BRER checkpoint file.
-            self.run_data.save_config(fnm=self.state_json)
-    
-
-        # This is going through the .dat files I generated in def__run, this is the memory storage of A
-        count=0
-        for name in self.__names:
-            namedat_reject="{}_reject.dat".format(name)
-            namedat="{}.dat".format(name)
-            os.chdir(self.dat_dir)
-            if namedat in os.getcwd():
-                with open(namedat, "r") as g:
-                    lines=g.readlines()[1:]
-                g.close()
-                lines=lines.replace('\n',';')
-                lines=lines.replace(' ',',')
-                lines=lines.strip(',;')
-                data=np.matrix(lines)
-                possible_target = data[:,0]
-                possible_target=np.array(possible_target)
-                current_target= corr_target(count)
-                if current_target in possible_target:
-                    target_index =   np.where(possible_target==current_target)
-                    A = data[target_index,1]
-                    A=np.array(A)
-                    A=np.sort(A,axis=None)
-                    A=np.median(A)
-                    if namedat_reject in os.getcwd():
-                            with open(namedat_reject, "r") as g:
-                                lines=g.readlines()[1:]
-                            g.close()
-                            lines=lines.replace('\n',';')
-                            lines=lines.replace(' ',',')
-                            lines=lines.strip(',;')
-                            data=np.matrix(lines)
-                            possible_target = data[:,1]
-                            possible_target=np.array(possible_target)
-                            current_target= corr_target(count)
-                            count=count+1
-                            if current_target in possible_target:
-                                target_index =   np.where(possible_target==current_target)
-                                A1 = data[target_index,2]
-                                if A in A1:
-                                        A=1.1*A
-                                        self.run_data.set(A=A,name=name)
-                                else:
-                                        self.run_data.set(A=A,name=name)
-                            else:
-                                self.run_data.set(A=A, name=name)
-                    else:
-                        self.run_data.set(A=A, name=name)
-                else:
-                    pass #use the default A-value
             else:
-                    pass # this means this is the first run of training
+                #This is looking for the dict.json file from the previous ensemble 
+                if os.path.exists('{}/mem_{}/dict.json'.format(ens_dir, prev_ens_num)):
+                    json='{}/mem_{}/dict.json'.format(ens_dir, prev_ens_num)
+                    path='{}/mem_{}'.format(ens_dir, ens_num)
+                    shutil.copy(json, '{}'.format(path))
+                    self._logger.info("Copying dictionary from previous ensemble number {}".format(prev_ens_num))
+        else:
+             with open("{}/mem_{}/dict.json".format(ens_dir, ens_num),"w+") as f:
+                self._logger.info("Starting a new dictionary")
+
+                
+
+    def __train(self):
+        # do re-sampling
+        targets = self.pairs.re_sample()
+        self._logger.info('New targets: {}'.format(targets))
+        for name in self.__names:
+            self.run_data.set(name=name, target=targets[name])
+
+        # save the new targets to the BRER checkpoint file.
+        self.run_data.save_config(fnm=self.state_json)
+
 
         # backup existing checkpoint.
         # TODO: Don't backup the cpt, actually use it!!
-        path="{}/mem_{}/{}/training".format(ens_dir,ens_num,current_iter)
-        os.chdir(path)
-
         cpt = '{}/state.cpt'.format(os.getcwd())
+        if os.path.exists(cpt):
+            self._logger.warning(
+                'There is a checkpoint file in your current working directory, but you are '
+                'training. The cpt will be backed up and the run will start over with new targets'
+            )
+            shutil.move(cpt, '{}.bak'.format(cpt))
 
-        if self.A_parameter==1:
-            if os.path.exists(cpt):
-                self._logger.warning(
-                    'There is a checkpoint file in your current working directory, but you are '
-                    'training. The cpt will be backed up and the run will start over with new targets'
-                )
-                shutil.move(cpt, '{}.bak'.format(cpt))
-        else:
-            path="{}/mem_{}/{}/convergence".format(ens_dir, ens_num, current_iter )
-            if os.path.exists(path):
-                self._logger.warning(
-                    'There is a checkpoint file in your current working directory; however you are '
-                    'training with original targets. The cpt will be backed up and the run will start over with original targets'
-                )
-                shutil.move(cpt, '{}.bak'.format(cpt))
 
         # Set up a dictionary to go from plugin name -> restraint name
         sites_to_name = {}
@@ -308,6 +246,156 @@ class RunConfig:
             self.run_data.set(name=current_name, target=current_target)
             self._logger.info("Plugin {}: alpha = {}, target = {}".format(current_name, current_alpha, current_target))
 
+    def __retrain(self):
+        current_iter = self.run_data.get('iteration')
+        ens_num = self.run_data.get('ensemble_num')
+        ens_dir=self.ens_dir
+        cpt = '{}/state.cpt'.format(os.getcwd())
+
+        # Ensuring that this is truly a retraining phase, convergence directory will exist if this is truly a retrain
+        path="{}/mem_{}/{}/convergence".format(ens_dir, ens_num, current_iter)  
+        if os.path.exists(path):
+            self.run_data.from_dictionary(json.load(open(self.state_json)))
+            corr_target=[]
+            count=0
+            names=[]
+            for name in self.__names:
+                # Setting to original targets
+                corr_target.append(self.run_data.get('target', name=name))
+                self.run_data.set(name=name, target=corr_target[count])
+                names.append(name)
+                names.append(corr_target[count])
+                count=count+1
+            self._logger.info('Old targets: {}'.format(names))
+            self.run_data.save_config(fnm=self.state_json)
+
+        # This reads through the memory from dict.json and determines if A is suitable for the retrain
+        for name in self.__names:
+            with open('{}/mem_{}/dict.json'.format(ens_dir,ens_num),"w+") as f:
+                try:
+                    dict=json.load(f)
+                except ValueError:
+                    dict={}
+                    for name in self.__names:
+                        dict['{}'.format(name)]={}
+                        dict['{}'.format(name)]['acceptA']={}
+                        dict['{}'.format(name)]['rejectA']={}
+            acceptA=dict['{}'.format(name)]['acceptA']
+            rejectA= dict['{}'.format(name)]['rejectA']
+            possible_target=acceptA.keys()
+            possible_A=acceptA.values()
+            current_target=self.run_data.get('target', name=name)
+                
+            if current_target in possible_target:
+                target_index =   np.where(possible_target==current_target)
+                A = possible_A[target_index]
+                A=np.array(A)
+                A=np.sort(A,axis=None)
+                A=np.median(A)
+                possible_target = rejectA.keys()
+                possible_A=rejectA.values()
+
+                if current_target in possible_target:
+                    target_index =   np.where(possible_target==current_target)
+                    A1 = possible_A[target_index]
+                    A1=np.array(A1)
+                    if A in A1:
+                        A=1.1*A
+                        self.run_data.set(A=A,name=name)
+                    else:
+                        self.run_data.set(A=A,name=name)
+                else:
+                    self.run_data.set(A=A, name=name)
+            else:
+                pass #use the default A-value
+            
+        # backup existing checkpoint.
+        # TODO: Don't backup the cpt, actually use it!!
+        # cpt = '{}/state.cpt'.format(os.getcwd())
+        if os.path.exists(cpt):
+            self._logger.warning(
+                'There is a checkpoint file in your current working directory; however you are '
+                'training with original targets. The cpt will be backed up and the run will start over with original targets.'
+            )
+            shutil.move(cpt, '{}.bak'.format(cpt))
+
+        # Set up a dictionary to go from plugin name -> restraint name
+        sites_to_name = {}
+
+        # Build the gmxapi session.
+        md = gmx.workflow.from_tpr(self.tpr, append_output=False)
+        self.build_plugins(TrainingPluginConfig())
+        for plugin in self.__plugins:
+            plugin_name = plugin.name
+            for name in self.__names:
+                run_data_sites = "{}".format(self.run_data.get('sites', name=name))
+                if run_data_sites == plugin_name:
+                    sites_to_name[plugin_name] = name
+            md.add_dependency(plugin)
+        context = gmx.context.ParallelArrayContext(md, workdir_list=[os.getcwd()])
+
+        # Run it.
+        with context as session:
+            session.run()
+
+        # In the future runs (convergence, production) we need the ABSOLUTE VALUE of alpha.
+        self._logger.info("=====TRAINING INFO======\n")
+
+        for i in range(len(self.__names)):
+            current_name = sites_to_name[context.potentials[i].name]
+            current_alpha = context.potentials[i].alpha
+            current_target = context.potentials[i].target
+
+            self.run_data.set(name=current_name, alpha=current_alpha)
+            self.run_data.set(name=current_name, target=current_target)
+            self._logger.info("Plugin {}: alpha = {}, target = {}".format(current_name, current_alpha, current_target))
+
+    def __datDict(self):
+        current_iter = self.run_data.get('iteration')
+        ens_num = self.run_data.get('ensemble_num')
+        ens_dir=self.ens_dir
+        prev_path=os.getcwd()
+         
+        # Reads in dictionary, if there are no values it sets up the nested dictionary
+        for name in self.__names:
+            with open('{}/mem_{}/dict.json'.format(ens_dir,ens_num), "a+") as f:
+                try:
+                    dict=json.load(f)
+                except ValueError:
+                    dict={}
+                    for name in self.__names:
+                        dict['{}'.format(name)]={}
+                        dict['{}'.format(name)]['acceptA']={}
+                        dict['{}'.format(name)]['rejectA']={}   
+            self._logger.info("{}".format(dict))       
+            namelog="{}.log".format(name)
+            path="{}/mem_{}/{}/training".format(ens_dir,ens_num, current_iter)
+            os.chdir(path)
+            # Reads the R and target from the log files
+            with open(namelog) as openfile:
+                f=openfile.readlines()[-1]
+                f=f.replace('\t',',')
+                f=np.matrix(f)
+                sample_count=f[0,2]
+                A=self.run_data.get('A', name=name)
+                corr_target= f[0,3]
+                corr_A  = self.run_data.get('A',name=name)
+            # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
+                if sample_count >400:
+                    self.A_parameter=0
+                    dict['{}'.format(name)]['rejectA'][str(corr_target)]=[str(corr_A)]
+                    if self.retrain_count==5:
+                        A=2*A
+                        self.retrain_count==0
+                    else:
+                        A=1.1*A
+                    self.run_data.set(A=A, name=name)
+                else:
+                    dict['{}'.format(name)]['acceptA'][str(corr_target)]=[str(corr_A)]
+            self._logger.info("{}".format(dict))
+            with open('{}/mem_{}/dict.json'.format(ens_dir, ens_num),"w+") as f:
+                json.dump(dict,f)
+        os.chdir(prev_path)
 
     def __converge(self):
         self.__move_cpt()
@@ -366,111 +454,34 @@ class RunConfig:
         self.__change_directory()
 
         if phase == 'training':
-            self.__train()
+            self.__move_dict()
+            if self.A_parameter==0:
+                self.__retrain()
+            else:
+                self.__train()
             self.run_data.set(phase='convergence')
             self.A_parameter=1
            
 
         elif phase == 'convergence':
-
-            # Checking if training for alpha for all restraints was completed within 20ns, and if so, the target and its corresponding A-value are recorded in a .dat
-            # for future use, and the covergence run follows.
-
-            self.corr_target=[]
-            current_iter = self.run_data.get('iteration')
-            ens_num = self.run_data.get('ensemble_num')
-            ens_dir=self.ens_dir
-
-            for name in self.__names:
-                namelog="{}.log".format(name)
-                path="{}/mem_{}/{}/training".format(ens_dir,ens_num, current_iter)
-                os.chdir(path)
-
-                if os.path.isfile(namelog):
-                    with open(namelog) as openfile:
-                        f=openfile.readlines()[-1]
-                        f=f.replace('\t',',')
-                        f=np.matrix(f)
-                        sample_count=f[0,2]
-                        if sample_count >400:
-                            self.A_parameter=0
-                            A=self.run_data.get('A', name=name)
-                            corr_R = f[0,1]
-                            corr_target= f[0,3]
-                            self.corr_target.append(corr_target)
-                            corr_A  = self.run_data.get('A',name=name)
-                            A=1.1*A
-
-                            self.run_data.set(A=A, name=name)
-                            namedat="{}_reject.dat".format(name)
-                            os.chdir(self.dat_dir)
-                            if namedat in os.getcwd():
-                                with open(namedat,"a+") as g:
-                                    g.write('%f' % corr_R)
-                                    g.write("\t")
-                                    g.write('%f' % corr_target)
-                                    g.write("\t")
-                                    g.write('%f' % corr_A)
-                                g.close()
-
-                            else:
-                                with open(namedat, "w+") as g:
-                                    g.write("R        Target          A")
-                                    g.write("\n")
-                                    g.write('%f' % corr_R)
-                                    g.write("\t")
-                                    g.write('%f' % corr_target)
-                                    g.write("\t")
-                                    g.write('%f' %corr_A)
-                                g.close()
-
-                        else:
-                            corr_R = f[0,1]
-                            corr_target = f[0,3]
-                            #self.corr_target.append(corr_target)
-                            corr_A  = self.run_data.get('A',name=name)
-                            namedat="{}.dat".format(name)
-                            os.chdir(self.dat_dir)
-                            if namedat in os.getcwd():
-                                with open(namedat,"a+") as g:
-                                    g.write('%f' % corr_target)
-                                    g.write("\t")
-                                    g.write('%f' % corr_A)
-                                g.close()
-
-                            else:
-                                with open(namedat, "w+") as g:
-                                    g.write("Target          A")
-                                    g.write("\n")
-                                    g.write('%f' % corr_target)
-                                    g.write("\t")
-                                    g.write('%f' %corr_A)
-                                g.close()
-
-                        if self.A_parameter==1:
-                            self.run_data.set(phase='convergence')
-                            phase = self.run_data.get('phase')
-                            self.__change_directory()
-                            self.__converge()
-                            self.run_data.set(phase='convergence') 
-                          
-                          
-                        else:
-                            self.run_data.set(
-                                phase='training',
-                                start_time=0,
-                                iteration=(self.run_data.get('iteration')))
-                            self.run()
-                      
-
-                else:
-                    # The training phase should always start normally, so there has to be log files
-                    print("The log files were not located, thus a training run was not completd. Starting training run now:")
-                    self.run_data.set(
-                        phase='training',
-                        start_time=0,
-                        iteration=(self.run_data.get('iteration')))
-              
+            self.__datDict()
+            if self.A_parameter==1:
+                self.run_data.set(phase='convergence')
+                phase = self.run_data.get('phase')
+                self.__change_directory()
+                self.__converge()
+                self.run_data.set(phase='production')             
+            else:
+                self.run_data.set(
+                    phase='training',
+                    start_time=0,
+                    iteration=(self.run_data.get('iteration')))
+                phase = self.run_data.get('phase')
+                self.__change_directory()
+                self.retrain_count=self.retrain_count +1
+                self.__retrain()
+                self.run_data.set(phase='convergence')
+                self.run()              
 
         else:
             self.__production()
