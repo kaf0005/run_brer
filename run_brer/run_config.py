@@ -13,6 +13,12 @@ import json
 import numpy as np
 # import atexit
 
+# This class encodes the numpy arrays of saved A values so that they may be added to the json dictionary
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 class RunConfig:
     """Run configuration for single BRER ensemble member."""
@@ -23,8 +29,10 @@ class RunConfig:
                  dict_json,
                  ensemble_num=1,
                  pairs_json='pair_data.json',
-                 A_parameter=[],
-                 retrain_count=0
+                 sample_count=[],
+                 retrain_count=0,
+                 targetSet=[],
+                 j=[]
                  ):
         """The run configuration specifies the files and directory structure
         used for the run. It determines whether the run is in the training,
@@ -48,9 +56,10 @@ class RunConfig:
         self.tpr = tpr
         self.ens_dir = ensemble_dir
         self.dict_json=dict_json
-        self.A_parameter = []
         self.retrain_count=0
-
+        self.targetSet=[]
+        self.j=[]
+        self.sample_count=[]
 
         # a list of identifiers of the residue-residue pairs that will be restrained
         self.__names = []
@@ -168,28 +177,28 @@ class RunConfig:
                 gmx_cpt = '{}/{}/convergence/state.cpt'.format(member_dir, current_iter)
                 shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
 
-    def __move_dict(self):
+    def __moveDict(self):
 
-        current_iter = self.run_data.get('iteration')
-        prev_iter=current_iter-1
-        ens_num = self.run_data.get('ensemble_num')
-        prev_ens_num=ens_num -1
-        ens_dir=self.ens_dir
-        
         if self.dict_json==0:
-            if os.path.exists('{}/mem_{}/dict.json'.format(ens_dir,ens_num)):
+            path='{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num'))
+            if os.path.exists(path):
                 self._logger.info("Dictionary already exists: not moving any files")
 
             else:
                 #This is looking for the dict.json file from the previous ensemble 
-                if os.path.exists('{}/mem_{}/dict.json'.format(ens_dir, prev_ens_num)):
-                    json='{}/mem_{}/dict.json'.format(ens_dir, prev_ens_num)
-                    path='{}/mem_{}'.format(ens_dir, ens_num)
+                if os.path.exists('{}/mem_{}/dict.json'.format(self.ens_dir, (self.run_data.get('ensemble_num'))-1)):
+                    json='{}/mem_{}/dict.json'.format(self.ens_dir,(self.run_data.get('ensemble_num')-1))
+                    path='{}/mem_{}'.format(self.ens_dir, self.run_data.get('ensemble_num'))
                     shutil.copy(json, '{}'.format(path))
-                    self._logger.info("Copying dictionary from previous ensemble number {}".format(prev_ens_num))
+                    self._logger.info("Copying dictionary from previous ensemble number {}".format((self.run_data.get('ensemble_num'))-1))
+                else:
+                    self._logger.info("Dictionary not found; therefore, starting a new dictionary")
+                    g = open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')),'w+')
+                    g.close()
         else:
-             with open("{}/mem_{}/dict.json".format(ens_dir, ens_num),"w+") as f:
-                self._logger.info("Starting a new dictionary")
+            self._logger.info("Starting a new dictionary per user request")
+            g = open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')),'w+')
+            g.close()     
 
                 
 
@@ -214,7 +223,76 @@ class RunConfig:
             )
             shutil.move(cpt, '{}.bak'.format(cpt))
 
+        # Checking the dictionary for an acceptable A value for the target, if found, it makes sure that that A value isn't in the rejectA dictionary
+        for name in self.__names:
+            with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')),'r+') as f:
+                try:
+                    dict=json.load(f)
+                    j=json.dumps(dict)
+                    self.j=j
+                    print(dict)
+                    dict=json.loads(self.j)
+                    current_target=self.run_data.get('target',name=name)
+                    current_target_dict='{:2f}'.format(current_target)
+                    possible_target=dict['{}'.format(name)]['acceptA']
+                    possible_target=list(possible_target.keys())
+                    possible_target=''.join(possible_target)
+                    possible_target=float(possible_target)
+                    possible_target=np.matrix(possible_target)
 
+                    if current_target in possible_target:
+                        target_index =   np.where(possible_target==current_target)[0]
+                        target_index=int(target_index)
+                        possible_A=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(current_target_dict))
+                        possible_A=np.array(possible_A)
+                        A = possible_A[target_index]
+                        A=np.array(A)
+                        A=np.sort(A,axis=None)
+                        A=np.median(A)
+                        
+                        try:
+                            possible_target=dict['{}'.format(name)]['rejectA']
+                            possible_target=list(possible_target.keys())
+                            possible_target=''.join(possible_target)
+                            possible_target=float(possible_target)
+                            possible_target=np.matrix(possible_target)
+                            print('\n')
+                            if current_target in possible_target:
+                                target_index =   np.where(possible_target==current_target)
+                                target_index=int(target_index)
+                                possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target_dict))
+                                possible_A=np.array(possible_A)
+                                A1 = possible_A[target_index]
+                                A1=np.array(A1)
+                                i=len(A)
+                                i=i-1
+                                j=len(A1)
+                                j=j-1
+                                break_loop=0
+                                for i in range(0,i):
+                                    if break_loop==1:
+                                        break
+                                    else:
+                                        continue
+                                    for j in range(0,j):
+                                        if A[i]==A1[j]:
+                                            A=1.1*A
+                                            break_loop=1                        
+                                self.run_data.set(A=A,name=name)
+                            else:
+                                self.run_data.set(A=A, name=name)
+
+                        except KeyError:
+                            pass #retrain KeyError: rejectA for the current target does not exist yet
+                    else:
+                        pass #use the default A-value
+                             
+                except KeyError:
+                    pass #retrain KeyError: acceptA for the current target does not exist yet
+                except ValueError: 
+                    pass #retrain ValueError: dictionary values do not exist yet
+                
+ 
         # Set up a dictionary to go from plugin name -> restraint name
         sites_to_name = {}
 
@@ -247,71 +325,84 @@ class RunConfig:
             self._logger.info("Plugin {}: alpha = {}, target = {}".format(current_name, current_alpha, current_target))
 
     def __retrain(self):
-        current_iter = self.run_data.get('iteration')
-        ens_num = self.run_data.get('ensemble_num')
-        ens_dir=self.ens_dir
-        cpt = '{}/state.cpt'.format(os.getcwd())
+        self.run_data.from_dictionary(json.load(open(self.state_json)))
+        corr_target=[]
+        count=0
+        names=[]
+        if self.retrain_count == 6:
+            self.retrain_count =0
 
-        # Ensuring that this is truly a retraining phase, convergence directory will exist if this is truly a retrain
-        path="{}/mem_{}/{}/convergence".format(ens_dir, ens_num, current_iter)  
-        if os.path.exists(path):
-            self.run_data.from_dictionary(json.load(open(self.state_json)))
-            corr_target=[]
-            count=0
-            names=[]
-            for name in self.__names:
-                # Setting to original targets
-                corr_target.append(self.run_data.get('target', name=name))
-                self.run_data.set(name=name, target=corr_target[count])
-                names.append(name)
-                names.append(corr_target[count])
-                count=count+1
-            self._logger.info('Old targets: {}'.format(names))
-            self.run_data.save_config(fnm=self.state_json)
+        for name in self.__names:
+            # Setting to original targets
+            corr_target.append(self.run_data.get('target', name=name))
+            self.run_data.set(name=name, target=corr_target[count])
+            names.append(name)
+            names.append(corr_target[count])
+            count=count+1
+        self._logger.info('Original targets: {}'.format(names))
+        self.run_data.save_config(fnm=self.state_json)
 
         # This reads through the memory from dict.json and determines if A is suitable for the retrain
         for name in self.__names:
-            with open('{}/mem_{}/dict.json'.format(ens_dir,ens_num),"w+") as f:
+            with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')),'r+') as f:
                 try:
                     dict=json.load(f)
-                except ValueError:
-                    dict={}
-                    for name in self.__names:
-                        dict['{}'.format(name)]={}
-                        dict['{}'.format(name)]['acceptA']={}
-                        dict['{}'.format(name)]['rejectA']={}
-            acceptA=dict['{}'.format(name)]['acceptA']
-            rejectA= dict['{}'.format(name)]['rejectA']
-            possible_target=acceptA.keys()
-            possible_A=acceptA.values()
-            current_target=self.run_data.get('target', name=name)
-                
-            if current_target in possible_target:
-                target_index =   np.where(possible_target==current_target)
-                A = possible_A[target_index]
-                A=np.array(A)
-                A=np.sort(A,axis=None)
-                A=np.median(A)
-                possible_target = rejectA.keys()
-                possible_A=rejectA.values()
+                    j=json.dumps(dict)
+                    self.j=j
+                    dict=json.loads(self.j)
+                    current_target=self.run_data.get('target',name=name)
+                    current_target_dict='{:2f}'.format(current_target)
+                    possible_target=dict['{}'.format(name)]['acceptA']
+                    possible_target=list(possible_target.keys())
+                    possible_target=''.join(possible_target)
+                    possible_target=float(possible_target)
+                    possible_target=np.matrix(possible_target)
 
-                if current_target in possible_target:
-                    target_index =   np.where(possible_target==current_target)
-                    A1 = possible_A[target_index]
-                    A1=np.array(A1)
-                    if A in A1:
-                        A=1.1*A
-                        self.run_data.set(A=A,name=name)
+                    if current_target in possible_target:
+                        target_index =   np.where(possible_target==current_target)[0]
+                        target_index=int(target_index)
+                        possible_A=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(current_target_dict))
+                        possible_A=np.array(possible_A)
+                        A = possible_A[target_index]
+                        A=np.array(A)
+                        A=np.sort(A,axis=None)
+                        A=np.median(A)
+                        
+                        try:
+                            possible_target=dict['{}'.format(name)]['rejectA']
+                            possible_target=list(possible_target.keys())
+                            possible_target=''.join(possible_target)
+                            possible_target=float(possible_target)
+                            possible_target=np.matrix(possible_target)
+                            print('\n')
+                            if current_target in possible_target:
+                                target_index =   np.where(possible_target==current_target)
+                                target_index=int(target_index)
+                                possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target_dict))
+                                possible_A=np.array(possible_A)
+                                A1 = possible_A[target_index]
+                                A1=np.array(A1)
+                                if A in A1:
+                                    A=1.1*A
+                                    self.run_data.set(A=A,name=name)
+                                else:
+                                    self.run_data.set(A=A,name=name)
+                            else:
+                                self.run_data.set(A=A, name=name)
+                        
+                        except KeyError:
+                            pass #retrain KeyError: rejectA for the current target does not exist yet
                     else:
-                        self.run_data.set(A=A,name=name)
-                else:
-                    self.run_data.set(A=A, name=name)
-            else:
-                pass #use the default A-value
+                        pass #use the default A-value
+                             
+                except KeyError:
+                    pass #retrain KeyError: acceptA for the current target does not exist yet
+                except ValueError: 
+                    pass #retrain ValueError: dictionary values do not exist yet
             
         # backup existing checkpoint.
         # TODO: Don't backup the cpt, actually use it!!
-        # cpt = '{}/state.cpt'.format(os.getcwd())
+        cpt = '{}/state.cpt'.format(os.getcwd())
         if os.path.exists(cpt):
             self._logger.warning(
                 'There is a checkpoint file in your current working directory; however you are '
@@ -351,51 +442,94 @@ class RunConfig:
             self._logger.info("Plugin {}: alpha = {}, target = {}".format(current_name, current_alpha, current_target))
 
     def __datDict(self):
-        current_iter = self.run_data.get('iteration')
-        ens_num = self.run_data.get('ensemble_num')
-        ens_dir=self.ens_dir
-        prev_path=os.getcwd()
-         
-        # Reads in dictionary, if there are no values it sets up the nested dictionary
-        for name in self.__names:
-            with open('{}/mem_{}/dict.json'.format(ens_dir,ens_num), "a+") as f:
-                try:
-                    dict=json.load(f)
-                except ValueError:
-                    dict={}
-                    for name in self.__names:
-                        dict['{}'.format(name)]={}
-                        dict['{}'.format(name)]['acceptA']={}
-                        dict['{}'.format(name)]['rejectA']={}   
-            self._logger.info("{}".format(dict))       
-            namelog="{}.log".format(name)
-            path="{}/mem_{}/{}/training".format(ens_dir,ens_num, current_iter)
-            os.chdir(path)
-            # Reads the R and target from the log files
-            with open(namelog) as openfile:
-                f=openfile.readlines()[-1]
-                f=f.replace('\t',',')
-                f=np.matrix(f)
-                sample_count=f[0,2]
-                A=self.run_data.get('A', name=name)
-                corr_target= f[0,3]
-                corr_A  = self.run_data.get('A',name=name)
-            # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
-                if sample_count >400:
-                    self.A_parameter=0
-                    dict['{}'.format(name)]['rejectA'][str(corr_target)]=[str(corr_A)]
-                    if self.retrain_count==5:
-                        A=2*A
-                        self.retrain_count==0
+            # Reads in dictionary, if there are no values it sets up the nested dictionary
+        path = '{}/mem_{}/dict.json'.format(self.ens_dir, self.run_data.get('ensemble_num'))
+        with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')), 'r+') as g: 
+            try:
+                dict_original=json.load(g)
+                print(dict_original)
+                dict=dict_original
+                j=json.dumps(dict)
+                self.j=j
+                self.dict_json=1
+                merge=1
+
+            
+            except ValueError:
+                dict={}
+                for name in self.__names:
+                    dict['{}'.format(name)]={}
+                    dict['{}'.format(name)]['acceptA']={}
+                    dict['{}'.format(name)]['rejectA']={}
+                    #dict.update(d)
+                    #d={'{}'.format(name):{'rejectA':[]}
+                    j=json.dumps(dict)
+                print(j)
+                j=json.dumps(dict)
+                self.j=j
+                self.dict_json=0
+                merge=0
+
+        print(merge)
+        for name in self.__names: 
+            dict=json.loads(self.j)
+            path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'), name)   
+            if os.path.exists(path):
+                with open('{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'), name),"r") as openfile:
+                    f=openfile.readlines()[-1]
+                    f=f.replace('\t',',')
+                    f=np.matrix(f)
+                    sample_count=f[0,2]
+                    corr_target= f[0,3]
+                    corr_target='{:2f}'.format(corr_target)
+                    corr_A  = self.run_data.get('A',name=name)  
+                    # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
+                    if sample_count >0:
+                        self.sample_count=sample_count
+                        # Reassigning the A-value
+                        A=self.run_data.get('A', name=name)
+                        if self.retrain_count==5:
+                            A=2*A
+                        else:
+                            A=1.1*A
+                            self.run_data.set(A=A, name=name)
+                        try:
+                            values=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(corr_target))
+                            if values == None:
+                                dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]= corr_A
+                                j=json.dumps(dict) 
+                            else: 
+                                values=np.array(values)
+                                values=np.append(values, corr_A)
+                                dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=values
+                                j=json.dumps(dict,cls=NumpyEncoder)
+                
+                        except KeyError:
+                            dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=corr_A
+                            j=json.dumps(dict)
+
                     else:
-                        A=1.1*A
-                    self.run_data.set(A=A, name=name)
-                else:
-                    dict['{}'.format(name)]['acceptA'][str(corr_target)]=[str(corr_A)]
-            self._logger.info("{}".format(dict))
-            with open('{}/mem_{}/dict.json'.format(ens_dir, ens_num),"w+") as f:
-                json.dump(dict,f)
-        os.chdir(prev_path)
+                        A=self.run_data.get('A', name=name)
+                        try:
+                            values=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(corr_target))
+                            if values == None:
+                                dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=corr_A
+                                j=json.dumps(dict)
+                            else:
+                                values=np.array(values)
+                                values=np.append(values,corr_A)
+                                dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=values
+                                j=json.dumps(dict,cls=NumpyEncoder)
+
+                        except KeyError:
+                            dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=corr_A
+                            j=json.dumps(dict)
+                self.j=j
+
+        with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')), 'w+') as g:
+            g.write(self.j)
+            self._logger.info('{}'.format(dict))
+
 
     def __converge(self):
         self.__move_cpt()
@@ -444,46 +578,41 @@ class RunConfig:
             current_target = self.run_data.get('target', name=name)
             self._logger.info("Plugin {}: alpha = {}, target = {}".format(name, current_alpha, current_target))
 
-
-
     def run(self):
         """Perform the MD simulations.
         """
         phase = self.run_data.get('phase')
-
         self.__change_directory()
+     
 
         if phase == 'training':
-            self.__move_dict()
-            if self.A_parameter==0:
-                self.__retrain()
-            else:
-                self.__train()
-            self.run_data.set(phase='convergence')
-            self.A_parameter=1
-           
-
-        elif phase == 'convergence':
+            self.__moveDict()
             self.__datDict()
-            if self.A_parameter==1:
-                self.run_data.set(phase='convergence')
-                phase = self.run_data.get('phase')
-                self.__change_directory()
-                self.__converge()
-                self.run_data.set(phase='production')             
-            else:
-                self.run_data.set(
-                    phase='training',
-                    start_time=0,
-                    iteration=(self.run_data.get('iteration')))
-                phase = self.run_data.get('phase')
-                self.__change_directory()
-                self.retrain_count=self.retrain_count +1
-                self.__retrain()
-                self.run_data.set(phase='convergence')
-                self.run()              
-
+            if not self.sample_count or sample_count<0:
+                self.__train()
+                self.__datDict()
+                if self.sample_count>0:
+                    while self.sample_count>0:
+                        self.retrain_count=self.retrain_count+1
+                        self.__retrain()
+                        self.__datDict()
+                    self.run_data.set(phase='convergence') 
+                else:
+                    self.run_data.set(phase='convergence')
+            else:    
+                while self.sample_count>0:
+                    self.__datDict()
+                    self.retrain_count=self.retrain_count+1
+                    self.__retrain()
+                self.__datDict()
+                self.run_data.set(phase='convergence') 
+            
+        elif phase == 'convergence':
+            self.__converge()
+            self.run_data.set(phase='production')
+        
         else:
+            self.dict_json=0
             self.__production()
             self.run_data.set(phase='training', start_time=0, iteration=(self.run_data.get('iteration') + 1))
         self.run_data.save_config(self.state_json)
