@@ -592,7 +592,7 @@ class RunConfig:
                 else:
                     self.run_data.set(phase='convergence')
             
-            elif: self.sample_count<400 and self.A_parameter==1: #if restarted but proper training was already completed
+            elif self.sample_count<400 and self.A_parameter==1: #if restarted but proper training was already completed
                 self.run_data.set(phase='convergence') 
             
             else:   
