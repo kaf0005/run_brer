@@ -404,8 +404,7 @@ class RunConfig:
                     corr_target='{:2f}'.format(corr_target)
                     corr_A  = self.run_data.get('A',name=name)  
                     # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
-                    sample_count =0
-                    if sample_count >0:
+                    if sample_count >400:
                         self.sample_count=sample_count
                         # Reassigning the A-value
                         A=self.run_data.get('A', name=name)
@@ -498,8 +497,8 @@ class RunConfig:
             self.__moveDict()
             self.__train()
             self.__datDict()
-            if self.sample_count>0:#400:
-                while self.sample_count>0: #400:
+            if self.sample_count>400:
+                while self.sample_count>400:
                     self.retrain_count=self.retrain_count+1
                     self.__retrain()
                     self.__datDict()
