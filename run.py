@@ -4,7 +4,6 @@ Example run script for BRER simulations
 """
 
 import run_brer.run_config as rc
-import sys
 
 
 init = {
