@@ -246,8 +246,10 @@ class RunConfig:
                             if A in A1:
                                 A=1.1*A                        
                                 self.run_data.set(A=A,name=name)
+                                self.run_data.save_config(fnm=self.state_json)
                             else:
                                 self.run_data.set(A=A, name=name)
+                                self.run_data.save_config(fnm=self.state_json)
                     else:
                         pass #use the default A-value
                 
@@ -325,8 +327,10 @@ class RunConfig:
                             if A in A1:
                                 A=1.1*A                        
                                 self.run_data.set(A=A,name=name)
+                                self.run_data.save_config(fnm=self.state_json)
                             else:
                                 self.run_data.set(A=A, name=name)
+                                self.run_data.save_config(fnm=self.state_json)
                     else:
                         pass #use the default A-value
             
@@ -411,7 +415,9 @@ class RunConfig:
                             A=2*A
                         else:
                             A=1.1*A
-                            self.run_data.set(A=A, name=name)
+                        self.run_data.set(A=A, name=name)
+                        self.run_data.save_config(fnm=self.state_json)
+                        
                         if corr_target in dict['{}'.format(name)]['rejectA'].keys():
                             A=dict.get('{}'.format(name),{}).get('rejectA',{}).get('{}'.format(corr_target))
                             A=np.array(A)
