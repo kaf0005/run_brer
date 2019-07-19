@@ -28,6 +28,7 @@ class RunConfig:
                  ensemble_dir,
                  dict_json,
                  ensemble_num=1,
+                 A_parameter=1,
                  pairs_json='pair_data.json',
                  sample_count=[],
                  retrain_count=0,
@@ -60,6 +61,7 @@ class RunConfig:
         self.targetSet=[]
         self.j=[]
         self.sample_count=[]
+        self.A_parameter=1
 
         # a list of identifiers of the residue-residue pairs that will be restrained
         self.__names = []
@@ -230,7 +232,6 @@ class RunConfig:
                     dict=json.load(f)
                     j=json.dumps(dict)
                     self.j=j
-                    print(dict)
                     dict=json.loads(self.j)
                     current_target=self.run_data.get('target',name=name)
                     current_target_dict='{:2f}'.format(current_target)
@@ -256,7 +257,7 @@ class RunConfig:
                             possible_target=''.join(possible_target)
                             possible_target=float(possible_target)
                             possible_target=np.matrix(possible_target)
-                            print('\n')
+   
                             if current_target in possible_target:
                                 target_index =   np.where(possible_target==current_target)
                                 target_index=int(target_index)
@@ -330,7 +331,7 @@ class RunConfig:
         count=0
         names=[]
         if self.retrain_count == 6:
-            self.retrain_count =0
+            self.retrain_count =1
 
         for name in self.__names:
             # Setting to original targets
@@ -374,7 +375,7 @@ class RunConfig:
                             possible_target=''.join(possible_target)
                             possible_target=float(possible_target)
                             possible_target=np.matrix(possible_target)
-                            print('\n')
+       
                             if current_target in possible_target:
                                 target_index =   np.where(possible_target==current_target)
                                 target_index=int(target_index)
@@ -446,13 +447,9 @@ class RunConfig:
         path = '{}/mem_{}/dict.json'.format(self.ens_dir, self.run_data.get('ensemble_num'))
         with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')), 'r+') as g: 
             try:
-                dict_original=json.load(g)
-                print(dict_original)
-                dict=dict_original
+                dict=json.load(g)
                 j=json.dumps(dict)
                 self.j=j
-                self.dict_json=1
-                merge=1
 
             
             except ValueError:
@@ -461,16 +458,10 @@ class RunConfig:
                     dict['{}'.format(name)]={}
                     dict['{}'.format(name)]['acceptA']={}
                     dict['{}'.format(name)]['rejectA']={}
-                    #dict.update(d)
-                    #d={'{}'.format(name):{'rejectA':[]}
-                    j=json.dumps(dict)
-                print(j)
                 j=json.dumps(dict)
                 self.j=j
-                self.dict_json=0
-                merge=0
 
-        print(merge)
+        self.A_parameter=1
         for name in self.__names: 
             dict=json.loads(self.j)
             path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'), name)   
@@ -484,8 +475,9 @@ class RunConfig:
                     corr_target='{:2f}'.format(corr_target)
                     corr_A  = self.run_data.get('A',name=name)  
                     # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
-                    if sample_count >0:
+                    if sample_count >400:
                         self.sample_count=sample_count
+                        self.A_parameter=0
                         # Reassigning the A-value
                         A=self.run_data.get('A', name=name)
                         if self.retrain_count==5:
@@ -528,7 +520,7 @@ class RunConfig:
 
         with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')), 'w+') as g:
             g.write(self.j)
-            self._logger.info('{}'.format(dict))
+
 
 
     def __converge(self):
@@ -588,19 +580,23 @@ class RunConfig:
         if phase == 'training':
             self.__moveDict()
             self.__datDict()
-            if not self.sample_count or sample_count<0:
+            if not self.sample_count and self.A_parameter==1: #very first ever training run
                 self.__train()
                 self.__datDict()
-                if self.sample_count>0:
-                    while self.sample_count>0:
+                if self.sample_count>400:
+                    while self.sample_count>400:
                         self.retrain_count=self.retrain_count+1
                         self.__retrain()
                         self.__datDict()
                     self.run_data.set(phase='convergence') 
                 else:
                     self.run_data.set(phase='convergence')
-            else:    
-                while self.sample_count>0:
+            
+            elif self.sample_count<400 and self.A_parameter==1: #if restarted but proper training was already completed
+                self.run_data.set(phase='convergence') 
+            
+            else:   
+                while self.sample_count>400:
                     self.__datDict()
                     self.retrain_count=self.retrain_count+1
                     self.__retrain()
