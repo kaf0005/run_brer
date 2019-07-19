@@ -32,7 +32,6 @@ class RunConfig:
                  pairs_json='pair_data.json',
                  sample_count=[],
                  retrain_count=0,
-                 targetSet=[],
                  j=[]
                  ):
         """The run configuration specifies the files and directory structure
@@ -58,7 +57,6 @@ class RunConfig:
         self.ens_dir = ensemble_dir
         self.dict_json=dict_json
         self.retrain_count=0
-        self.targetSet=[]
         self.j=[]
         self.sample_count=[]
         self.A_parameter=1
@@ -226,72 +224,34 @@ class RunConfig:
             shutil.move(cpt, '{}.bak'.format(cpt))
 
         # Checking the dictionary for an acceptable A value for the target, if found, it makes sure that that A value isn't in the rejectA dictionary
+        path='{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num'))
         for name in self.__names:
-            with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')),'r+') as f:
-                try:
+            with open(path,'r+') as f:
+                if os.path.getsize(path)==0:
+                    pass #nothing in dictionary
+                else:
                     dict=json.load(f)
-                    j=json.dumps(dict)
-                    self.j=j
-                    dict=json.loads(self.j)
                     current_target=self.run_data.get('target',name=name)
-                    current_target_dict='{:2f}'.format(current_target)
-                    possible_target=dict['{}'.format(name)]['acceptA']
-                    possible_target=list(possible_target.keys())
-                    possible_target=''.join(possible_target)
-                    possible_target=float(possible_target)
-                    possible_target=np.matrix(possible_target)
+                    current_target='{:2f}'.format(current_target)
 
-                    if current_target in possible_target:
-                        target_index =   np.where(possible_target==current_target)[0]
-                        target_index=int(target_index)
-                        possible_A=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(current_target_dict))
+                    if current_target in dict['{}'.format(name)]['acceptA'].keys():
+                        possible_A=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(current_target))
                         possible_A=np.array(possible_A)
-                        A = possible_A[target_index]
-                        A=np.array(A)
-                        A=np.sort(A,axis=None)
+                        A = np.sort(possible_A, axis=None)
                         A=np.median(A)
-                        
-                        try:
-                            possible_target=dict['{}'.format(name)]['rejectA']
-                            possible_target=list(possible_target.keys())
-                            possible_target=''.join(possible_target)
-                            possible_target=float(possible_target)
-                            possible_target=np.matrix(possible_target)
-   
-                            if current_target in possible_target:
-                                target_index =   np.where(possible_target==current_target)
-                                target_index=int(target_index)
-                                possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target_dict))
-                                possible_A=np.array(possible_A)
-                                A1 = possible_A[target_index]
-                                A1=np.array(A1)
-                                i=len(A)
-                                i=i-1
-                                j=len(A1)
-                                j=j-1
-                                break_loop=0
-                                for i in range(0,i):
-                                    if break_loop==1:
-                                        break
-                                    else:
-                                        continue
-                                    for j in range(0,j):
-                                        if A[i]==A1[j]:
-                                            A=1.1*A
-                                            break_loop=1                        
+
+                        if current_target in dict['{}'.format(name)]['rejectA'].keys():
+                            possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target))
+                            A1=np.array(possible_A)
+                            if A in A1:
+                                A=1.1*A                        
                                 self.run_data.set(A=A,name=name)
+                                self.run_data.save_config(fnm=self.state_json)
                             else:
                                 self.run_data.set(A=A, name=name)
-
-                        except KeyError:
-                            pass #retrain KeyError: rejectA for the current target does not exist yet
+                                self.run_data.save_config(fnm=self.state_json)
                     else:
                         pass #use the default A-value
-                             
-                except KeyError:
-                    pass #retrain KeyError: acceptA for the current target does not exist yet
-                except ValueError: 
-                    pass #retrain ValueError: dictionary values do not exist yet
                 
  
         # Set up a dictionary to go from plugin name -> restraint name
@@ -344,62 +304,35 @@ class RunConfig:
         self.run_data.save_config(fnm=self.state_json)
 
         # This reads through the memory from dict.json and determines if A is suitable for the retrain
+        path='{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num'))
         for name in self.__names:
-            with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')),'r+') as f:
-                try:
+            with open(path,'r+') as f:
+                if os.path.getsize(path)==0:
+                    pass #nothing in dictionary
+                else:
                     dict=json.load(f)
-                    j=json.dumps(dict)
-                    self.j=j
-                    dict=json.loads(self.j)
                     current_target=self.run_data.get('target',name=name)
-                    current_target_dict='{:2f}'.format(current_target)
-                    possible_target=dict['{}'.format(name)]['acceptA']
-                    possible_target=list(possible_target.keys())
-                    possible_target=''.join(possible_target)
-                    possible_target=float(possible_target)
-                    possible_target=np.matrix(possible_target)
+                    current_target='{:2f}'.format(current_target)
 
-                    if current_target in possible_target:
-                        target_index =   np.where(possible_target==current_target)[0]
-                        target_index=int(target_index)
-                        possible_A=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(current_target_dict))
+                    if current_target in dict['{}'.format(name)]['acceptA'].keys():
+                        possible_A=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(current_target))
                         possible_A=np.array(possible_A)
-                        A = possible_A[target_index]
-                        A=np.array(A)
-                        A=np.sort(A,axis=None)
+                        A = np.sort(possible_A, axis=None)
                         A=np.median(A)
-                        
-                        try:
-                            possible_target=dict['{}'.format(name)]['rejectA']
-                            possible_target=list(possible_target.keys())
-                            possible_target=''.join(possible_target)
-                            possible_target=float(possible_target)
-                            possible_target=np.matrix(possible_target)
-       
-                            if current_target in possible_target:
-                                target_index =   np.where(possible_target==current_target)
-                                target_index=int(target_index)
-                                possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target_dict))
-                                possible_A=np.array(possible_A)
-                                A1 = possible_A[target_index]
-                                A1=np.array(A1)
-                                if A in A1:
-                                    A=1.1*A
-                                    self.run_data.set(A=A,name=name)
-                                else:
-                                    self.run_data.set(A=A,name=name)
+
+                        if current_target in dict['{}'.format(name)]['rejectA'].keys():
+                            possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target))
+                            A1=np.array(possible_A)
+                            
+                            if A in A1:
+                                A=1.1*A                        
+                                self.run_data.set(A=A,name=name)
+                                self.run_data.save_config(fnm=self.state_json)
                             else:
                                 self.run_data.set(A=A, name=name)
-                        
-                        except KeyError:
-                            pass #retrain KeyError: rejectA for the current target does not exist yet
+                                self.run_data.save_config(fnm=self.state_json)
                     else:
                         pass #use the default A-value
-                             
-                except KeyError:
-                    pass #retrain KeyError: acceptA for the current target does not exist yet
-                except ValueError: 
-                    pass #retrain ValueError: dictionary values do not exist yet
             
         # backup existing checkpoint.
         # TODO: Don't backup the cpt, actually use it!!
@@ -443,16 +376,14 @@ class RunConfig:
             self._logger.info("Plugin {}: alpha = {}, target = {}".format(current_name, current_alpha, current_target))
 
     def __datDict(self):
-            # Reads in dictionary, if there are no values it sets up the nested dictionary
+        # Reads in dictionary, if there are no values it sets up the nested dictionary
         path = '{}/mem_{}/dict.json'.format(self.ens_dir, self.run_data.get('ensemble_num'))
-        with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')), 'r+') as g: 
-            try:
+        with open(path, 'r+') as g: 
+            if os.path.getsize(path)>0: 
                 dict=json.load(g)
                 j=json.dumps(dict)
                 self.j=j
-
-            
-            except ValueError:
+            else:
                 dict={}
                 for name in self.__names:
                     dict['{}'.format(name)]={}
@@ -462,6 +393,7 @@ class RunConfig:
                 self.j=j
 
         self.A_parameter=1
+        self.sample_count=0
         for name in self.__names: 
             dict=json.loads(self.j)
             path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'), name)   
@@ -477,50 +409,40 @@ class RunConfig:
                     # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
                     if sample_count >400:
                         self.sample_count=sample_count
-                        self.A_parameter=0
                         # Reassigning the A-value
                         A=self.run_data.get('A', name=name)
                         if self.retrain_count==5:
                             A=2*A
                         else:
                             A=1.1*A
-                            self.run_data.set(A=A, name=name)
-                        try:
-                            values=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(corr_target))
-                            if values == None:
-                                dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]= corr_A
-                                j=json.dumps(dict) 
-                            else: 
-                                values=np.array(values)
-                                values=np.append(values, corr_A)
-                                dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=values
-                                j=json.dumps(dict,cls=NumpyEncoder)
-                
-                        except KeyError:
+                        self.run_data.set(A=A, name=name)
+                        self.run_data.save_config(fnm=self.state_json)
+                        
+                        if corr_target in dict['{}'.format(name)]['rejectA'].keys():
+                            A=dict.get('{}'.format(name),{}).get('rejectA',{}).get('{}'.format(corr_target))
+                            A=np.array(A)
+                            A=np.append(A,corr_A)
+                            dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=A
+                            j=json.dumps(dict,cls=NumpyEncoder)
+                        else:
                             dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=corr_A
                             j=json.dumps(dict)
 
                     else:
                         A=self.run_data.get('A', name=name)
-                        try:
-                            values=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(corr_target))
-                            if values == None:
-                                dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=corr_A
-                                j=json.dumps(dict)
-                            else:
-                                values=np.array(values)
-                                values=np.append(values,corr_A)
-                                dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=values
-                                j=json.dumps(dict,cls=NumpyEncoder)
-
-                        except KeyError:
+                        if corr_target in dict['{}'.format(name)]['acceptA'].keys():
+                            A=dict.get('{}'.format(name),{}).get('acceptA',{}).get('{}'.format(corr_target))
+                            A=np.array(A)
+                            A=np.append(A,corr_A)
+                            dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=A
+                            j=json.dumps(dict,cls=NumpyEncoder)
+                        else:
                             dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=corr_A
                             j=json.dumps(dict)
                 self.j=j
 
         with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')), 'w+') as g:
             g.write(self.j)
-
 
 
     def __converge(self):
@@ -576,39 +498,24 @@ class RunConfig:
         phase = self.run_data.get('phase')
         self.__change_directory()
      
-
         if phase == 'training':
             self.__moveDict()
+            self.__train()
             self.__datDict()
-            if not self.sample_count and self.A_parameter==1: #very first ever training run
-                self.__train()
-                self.__datDict()
-                if self.sample_count>400:
-                    while self.sample_count>400:
-                        self.retrain_count=self.retrain_count+1
-                        self.__retrain()
-                        self.__datDict()
-                    self.run_data.set(phase='convergence') 
-                else:
-                    self.run_data.set(phase='convergence')
-            
-            elif self.sample_count<400 and self.A_parameter==1: #if restarted but proper training was already completed
-                self.run_data.set(phase='convergence') 
-            
-            else:   
+            if self.sample_count>400:
                 while self.sample_count>400:
-                    self.__datDict()
                     self.retrain_count=self.retrain_count+1
                     self.__retrain()
-                self.__datDict()
+                    self.__datDict()
                 self.run_data.set(phase='convergence') 
+            else:
+                self.run_data.set(phase='convergence')
             
         elif phase == 'convergence':
             self.__converge()
             self.run_data.set(phase='production')
         
         else:
-            self.dict_json=0
             self.__production()
             self.run_data.set(phase='training', start_time=0, iteration=(self.run_data.get('iteration') + 1))
         self.run_data.save_config(self.state_json)
