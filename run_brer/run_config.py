@@ -429,7 +429,6 @@ class RunConfig:
                             j=json.dumps(dict)
 
                     else:
-                        A=self.run_data.get('A', name=name)
                         if corr_target in dict['{}'.format(name)]['acceptA'].keys():
                             A=dict.get('{}'.format(name),{}).get('acceptA',{}).get('{}'.format(corr_target))
                             A=np.array(A)
