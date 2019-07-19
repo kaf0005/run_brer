@@ -32,7 +32,6 @@ class RunConfig:
                  pairs_json='pair_data.json',
                  sample_count=[],
                  retrain_count=0,
-                 targetSet=[],
                  j=[]
                  ):
         """The run configuration specifies the files and directory structure
@@ -58,7 +57,6 @@ class RunConfig:
         self.ens_dir = ensemble_dir
         self.dict_json=dict_json
         self.retrain_count=0
-        self.targetSet=[]
         self.j=[]
         self.sample_count=[]
         self.A_parameter=1
