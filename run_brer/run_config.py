@@ -243,9 +243,8 @@ class RunConfig:
                         if current_target in dict['{}'.format(name)]['rejectA'].keys():
                             possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target))
                             A1=np.array(possible_A)
-                            for i in range(0,(len(A1)-1)):
-                                if A == A1[i]:
-                                    A=1.1*A                        
+                            if A in A1:
+                                A=1.1*A                        
                                 self.run_data.set(A=A,name=name)
                             else:
                                 self.run_data.set(A=A, name=name)
@@ -322,9 +321,9 @@ class RunConfig:
                         if current_target in dict['{}'.format(name)]['rejectA'].keys():
                             possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target))
                             A1=np.array(possible_A)
-                            for i in range(0,(len(A1)-1)):
-                                if A == A1[i]:
-                                    A=1.1*A                        
+                            
+                            if A in A1:
+                                A=1.1*A                        
                                 self.run_data.set(A=A,name=name)
                             else:
                                 self.run_data.set(A=A, name=name)
