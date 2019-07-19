@@ -127,8 +127,6 @@ class Analysis:
             W_matrix=np.matrix(W_matrix)
             self.W_matrix=W_matrix
 
-    
-
     def __datDict(self):         
         # Reads in dictionary, if there are no values it sets up the nested dictionary
         data=self.data
@@ -136,25 +134,20 @@ class Analysis:
         workCalc=np.sum(self.W_matrix)
         path = '{}/targetSet.json'.format(self.analysis_dir)
         if os.path.exists(path):
-            with open('{}/targetSet.json'.format(self.analysis_dir), "r+") as f:
-                dict=json.load(f)
+            if os.path.getsize(path)>0:
+                with open('{}/targetSet.json'.format(self.analysis_dir), "r+") as f:
+                    dict=json.load(f)
                 if '{}'.format(targetSet) in dict:
                     values=dict.get('{}'.format(targetSet))
-                    values="{},{}".format(values,workCalc)
                     values=np.array(values)
-                    d={'{}'.format(targetSet):'{}'.format(values)}
-                    dict.update(d)
+                    values=np.append(values,workCalc)
+                    dict['{}'.format(targetSet)]=values
                 else:
-                    d={'{}'.format(targetSet):workCalc}
-                    dict.update(d)
-            with open('{}/targetSet.json'.format(self.analysis_dir), "r+") as f:
-                j=json.dumps(dict)
-                f.write(j)        
-        else:
-            dict={}
-            d={'{}'.format(targetSet):workCalc}
-            dict.update(d)
-        with open('{}/targetSet.json'.format(self.analysis_dir), "w") as f:
+                    dict['{}'.format(targetSet)]=workCalc
+            else:
+                dict={}
+                dict['{}'.format(targetSet)]=workCalc
+        with open('{}/targetSet.json'.format(self.analysis_dir), "w+") as f:
             j=json.dumps(dict)
             f.write(j)      
 
@@ -180,7 +173,7 @@ class Analysis:
                     exists=os.path.isfile('{}/mem_{}/{}/analysis.log'.format(self.ensemble_dir,self.n,self.m))
                     if exists:
                         print("You have already done analysis on this iteration:")
-                        print(path)
+                        print('{}/mem_{}/{}'.format(self.ensemble_dir,self.n,self.m))
                         print("If you wish to do another analysis run on this mem_directory and iteration,")
                         print("please delete the analysis.log file within the iteration directory.")
                         print("\n")
