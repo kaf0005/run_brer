@@ -28,6 +28,7 @@ class RunConfig:
                  ensemble_dir,
                  dict_json,
                  ensemble_num=1,
+                 max_sample_count=[],
                  convergeDist=[],
                  pairs_json='pair_data.json',
                  sample_count=[],
@@ -59,6 +60,7 @@ class RunConfig:
         self.retrain_count=0
         self.j=[]
         self.sample_count=[]
+
         # a list of identifiers of the residue-residue pairs that will be restrained
         self.__names = []
 
@@ -74,7 +76,6 @@ class RunConfig:
 
         self.run_data = RunData()
         self.run_data.set(ensemble_num=ensemble_num)
-    
         self.state_json = '{}/mem_{}/state.json'.format(ensemble_dir, self.run_data.get('ensemble_num'))
         # If we're in the middle of a run, 
         #  the BRER checkpoint file and continue from
@@ -244,7 +245,7 @@ class RunConfig:
                             possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target))
                             A1=np.array(possible_A)
                             if A in A1:
-                                A=1.1*A                        
+                                A=(self.run_data.get('increase_A'))*A                        
                                 self.run_data.set(A=A,name=name)
                                 self.run_data.save_config(fnm=self.state_json)
                             else:
@@ -325,7 +326,7 @@ class RunConfig:
                             A1=np.array(possible_A)
                             
                             if A in A1:
-                                A=1.1*A                        
+                                A=(self.run_data.get('increase_A'))*A                        
                                 self.run_data.set(A=A,name=name)
                                 self.run_data.save_config(fnm=self.state_json)
                             else:
@@ -412,14 +413,15 @@ class RunConfig:
                     self.convergeDist=convergeDist
                       
                     # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
-                    if sample_count >400:
+                    
+                    if sample_count > self.max_sample_count:
                         self.sample_count=sample_count
                         # Reassigning the A-value
                         A=self.run_data.get('A', name=name)
                         if self.retrain_count==5:
                             A=2*A
                         else:
-                            A=1.1*A
+                            A=(self.run_data.get('increase_A'))*A  
                         self.run_data.set(A=A, name=name)
                         self.run_data.save_config(fnm=self.state_json)
                         
@@ -501,7 +503,8 @@ class RunConfig:
         """
         phase = self.run_data.get('phase')
         self.__change_directory()
-     
+        self.max_sample_count=self.run_data.get('max_train_time')/self.run_data.get('tau')
+        print(self.max_sample_count)
         if phase == 'training':
             for name in self.__names:
                 path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'),name)
@@ -517,8 +520,8 @@ class RunConfig:
             else: 
                 self.__datDict()
 
-            if self.sample_count>400:
-                while self.sample_count>400:
+            if self.sample_count>self.max_sample_count:
+                while self.sample_count>self.max_sample_count:
                     self.retrain_count=self.retrain_count+1
                     self.__retrain()
                     self.__datDict()
@@ -528,8 +531,8 @@ class RunConfig:
                 self.retrain_count=self.retrain_count+1
                 self.__retrain()
                 self.__datDict()
-                if self.sample_count>400:
-                    while self.sample_count>400:
+                if self.sample_count>self.max_sample_count:
+                    while self.sample_count>self.max_sample_count:
                         self.retrain_count=self.retrain_count+1
                         self.__retrain()
                         self.__datDict()
