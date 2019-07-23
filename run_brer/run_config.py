@@ -28,7 +28,7 @@ class RunConfig:
                  ensemble_dir,
                  dict_json,
                  ensemble_num=1,
-                 A_parameter=1,
+                 convergeDist=[],
                  pairs_json='pair_data.json',
                  sample_count=[],
                  retrain_count=0,
@@ -59,8 +59,6 @@ class RunConfig:
         self.retrain_count=0
         self.j=[]
         self.sample_count=[]
-        self.A_parameter=1
-
         # a list of identifiers of the residue-residue pairs that will be restrained
         self.__names = []
 
@@ -71,6 +69,8 @@ class RunConfig:
         # file this prevents mixing up pair data amongst the different pairs (i.e.,
         # accidentally applying the restraints for pair 1 to pair 2.)
         self.__names = self.pairs.names
+        i=(len(self.__names))
+        self.convergeDist=np.zeros(i)
 
         self.run_data = RunData()
         self.run_data.set(ensemble_num=ensemble_num)
@@ -286,7 +286,7 @@ class RunConfig:
             self._logger.info("Plugin {}: alpha = {}, target = {}".format(current_name, current_alpha, current_target))
 
     def __retrain(self):
-        self.run_data.from_dictionary(json.load(open(self.state_json)))
+
         corr_target=[]
         count=0
         names=[]
@@ -392,8 +392,10 @@ class RunConfig:
                 j=json.dumps(dict)
                 self.j=j
 
-        self.A_parameter=1
+
         self.sample_count=0
+        count=0
+        convergeDist=self.convergeDist
         for name in self.__names: 
             dict=json.loads(self.j)
             path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'), name)   
@@ -405,7 +407,10 @@ class RunConfig:
                     sample_count=f[0,2]
                     corr_target= f[0,3]
                     corr_target='{:2f}'.format(corr_target)
-                    corr_A  = self.run_data.get('A',name=name)  
+                    corr_A  = self.run_data.get('A',name=name)
+                    convergeDist[count]=f[0,4]
+                    self.convergeDist=convergeDist
+                      
                     # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
                     if sample_count >400:
                         self.sample_count=sample_count
@@ -429,7 +434,6 @@ class RunConfig:
                             j=json.dumps(dict)
 
                     else:
-                        A=self.run_data.get('A', name=name)
                         if corr_target in dict['{}'.format(name)]['acceptA'].keys():
                             A=dict.get('{}'.format(name),{}).get('acceptA',{}).get('{}'.format(corr_target))
                             A=np.array(A)
@@ -499,15 +503,39 @@ class RunConfig:
         self.__change_directory()
      
         if phase == 'training':
+            for name in self.__names:
+                path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'),name)
+                if os.path.exists(path):
+                    retrain=True
+                else:
+                    retrain=False
+
             self.__moveDict()
-            self.__train()
-            self.__datDict()
+            if retrain ==0:
+                self.__train()
+                self.__datDict()
+            else: 
+                self.__datDict()
+
             if self.sample_count>400:
                 while self.sample_count>400:
                     self.retrain_count=self.retrain_count+1
                     self.__retrain()
                     self.__datDict()
                 self.run_data.set(phase='convergence') 
+            
+            elif 0 in self.convergeDist:
+                self.retrain_count=self.retrain_count+1
+                self.__retrain()
+                self.__datDict()
+                if self.sample_count>400:
+                    while self.sample_count>400:
+                        self.retrain_count=self.retrain_count+1
+                        self.__retrain()
+                        self.__datDict()
+                    self.run_data.set(phase='convergence')
+                else:
+                    self.run_data.set(phase='convergence')
             else:
                 self.run_data.set(phase='convergence')
             
