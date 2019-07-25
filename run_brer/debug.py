@@ -24,6 +24,7 @@ class Run:
                  tpr,
                  ensemble_dir,
                  dict_json,
+                 dict1=1,
                  ensemble_num=1,
                  pairs_json='pair_data.json',
                  A_parameter=[],
@@ -57,7 +58,7 @@ class Run:
         self.retrain_count=0
         self.targetSet=[]
         self.j=[]
-
+        self.dict1=1
 
         # a list of identifiers of the residue-residue pairs that will be restrained
         self.__names = []
@@ -138,97 +139,58 @@ class Run:
         # This reads through the memory from dict.json and determines if A is suitable for the retrain
         for name in self.__names:
             with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')),'r+') as f:
-                try:
-                    dict=json.loads(self.j)
+                dict=json.loads(self.j)
+                if not dict:
+                    pass # nothing in the dictionary
+                else:
                     current_target=self.run_data.get('target',name=name)
-                    current_target_dict='{:2f}'.format(current_target)
-                    possible_target=dict['{}'.format(name)]['acceptA']
-                    possible_target=list(possible_target.keys())
-                    possible_target=''.join(possible_target)
-                    possible_target=float(possible_target)
-                    possible_target=np.matrix(possible_target)
+                    current_target='{:2f}'.format(current_target)
 
-                    if current_target in possible_target:
-                        target_index =   np.where(possible_target==current_target)[0]
-                        target_index=int(target_index)
-                        possible_A=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(current_target_dict))
+                    if current_target in dict['{}'.format(name)]['acceptA'].keys():
+                        possible_A=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(current_target))
                         possible_A=np.array(possible_A)
-                        A = possible_A[target_index]
-                        A=np.array(A)
-                        A=np.sort(A,axis=None)
+                        A = np.sort(possible_A, axis=None)
                         A=np.median(A)
-                        
-                        try:
-                            possible_target=dict['{}'.format(name)]['rejectA']
-                            possible_target=list(possible_target.keys())
-                            possible_target=''.join(possible_target)
-                            possible_target=float(possible_target)
-                            possible_target=np.matrix(possible_target)
-                            print('\n')
-                            if current_target in possible_target:
-                                target_index =   np.where(possible_target==current_target)
-                                target_index=int(target_index)
-                                possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target_dict))
-                                possible_A=np.array(possible_A)
-                                A1 = possible_A[target_index]
-                                A1=np.array(A1)
-                                i=len(A)
-                                i=i-1
-                                j=len(A1)
-                                j=j-1
-                                break_loop=0
-                                for i in range(0,i):
-                                    if break_loop==1:
-                                        break
-                                    else:
-                                        continue
-                                    for j in range(0,j):
-                                        if A[i]==A1[j]:
-                                            A=1.1*A
-                                            break_loop=1                        
+
+                        if current_target in dict['{}'.format(name)]['rejectA'].keys():
+                            possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target))
+                            A1=np.array(possible_A)
+                            if A in A1:
+                                A=1.1*A 
                                 self.run_data.set(A=A,name=name)
+                                self.run_data.save_config(fnm=self.state_json)
                             else:
                                 self.run_data.set(A=A, name=name)
-                        except KeyError:
-                            pass #retrain KeyError: rejectA for the current target does not exist yet
+                                self.run_data.save_config(fnm=self.state_json)
                     else:
                         pass #use the default A-value
-                             
-                except KeyError:
-                    pass #retrain KeyError: acceptA for the current target does not exist yet
-                except ValueError: 
-                    pass #retrain ValueError: dictionary values do not exist yet
-                           
+        if self.dict1==1:
+            self.dict1=0
+            self.datDict
+        if self.dict1==0:
+            self.dict1=3
+            self.datDict                 
 
     def datDict(self):
             # Reads in dictionary, if there are no values it sets up the nested dictionary
         path = '{}/mem_{}/dict.json'.format(self.ens_dir, self.run_data.get('ensemble_num'))
-        with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')), 'r+') as g: 
-            try:
+        with open(path, 'r+') as g: 
+            if os.path.getsize(path)>0: 
                 dict_original=json.load(g)
-                print(dict_original)
                 dict=dict_original
                 j=json.dumps(dict)
                 self.j=j
-                self.dict_json=1
-                merge=1
-
-            except ValueError:
+            else:
                 dict={}
                 for name in self.__names:
                     dict['{}'.format(name)]={}
                     dict['{}'.format(name)]['acceptA']={}
                     dict['{}'.format(name)]['rejectA']={}
-                    #dict.update(d)
-                    #d={'{}'.format(name):{'rejectA':[]}
-                    j=json.dumps(dict)
-                print(j)
                 j=json.dumps(dict)
                 self.j=j
-                self.dict_json=0
-                merge=0
 
-        print(merge)
+        self.A_parameter=1
+        self.sample_count=0
         for name in self.__names: 
             dict=json.loads(self.j)
             path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'), name)   
@@ -240,9 +202,10 @@ class Run:
                     sample_count=f[0,2]
                     corr_target= f[0,3]
                     corr_target='{:2f}'.format(corr_target)
-                    corr_A  = self.run_data.get('A',name=name)  
+                    corr_A  = self.run_data.get('A',name=name) 
+                    print(corr_A) 
                     # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
-                    sample_count =1
+                    sample_count =0
                     if sample_count >0:
                         self.sample_count=sample_count
                         # Reassigning the A-value
@@ -252,50 +215,34 @@ class Run:
                         else:
                             A=1.1*A
                             self.run_data.set(A=A, name=name)
-                        try:
-                            values=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(corr_target))
-                            if values == None:
-                                dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=corr_A
-                                j=json.dumps(dict) 
-                            else: 
-                                values=np.array(values)
-                                values=np.append(values, corr_A)
-                                dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=values
-                                j=json.dumps(dict,cls=NumpyEncoder)
-                
-                        except KeyError:
+                            self.run_data.save_config(fnm=self.state_json)
+                        if corr_target in dict['{}'.format(name)]['rejectA'].keys():
+                            A=dict.get('{}'.format(name),{}).get('rejectA',{}).get('{}'.format(corr_target))
+                            A=np.array(A)
+                            A=np.append(A,corr_A)
+                            dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=A
+                            j=json.dumps(dict,cls=NumpyEncoder)
+                        else:
                             dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=corr_A
                             j=json.dumps(dict)
 
                     else:
                         A=self.run_data.get('A', name=name)
-                        try:
-                            values=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(corr_target))
-                            if values == None:
-                                d={'{}'.format(name):{'acceptA':{'{}'.format(corr_target):[corr_A]}}}
-                                dict.update(d)
-                                j=json.dumps(dict)
-                            else:
-                                values=np.array(values)
-                                values=np.append(values,corr_A)
-                                dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=values
-                                j=json.dumps(dict,cls=NumpyEncoder)
-
-                        except KeyError:
-                            dict=['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=corr_A
+                        if corr_target in dict['{}'.format(name)]['acceptA'].keys():
+                            A=dict.get('{}'.format(name),{}).get('acceptA',{}).get('{}'.format(corr_target))
+                            A=np.array(A)
+                            A=np.append(A,corr_A)
+                            dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=A
+                            j=json.dumps(dict,cls=NumpyEncoder)
+                        else:
+                            dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=corr_A
                             j=json.dumps(dict)
                 self.j=j
-                print(j)
 
         with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')), 'w+') as g:
-            if merge ==0:
-                g.write(self.j)
-            else:
-                dict=json.loads(self.j) # fix this         
-                #dict={**dict_original,**self.j} #merging the two different dictionaries
-                j=json.dumps(dict)
-                g.write(self.j)
-            self._logger.info('{}'.format(dict))
-     #       self._logger.info('{}'.format(dict))
-      #self.__retrain()
+            g.write(self.j)
 
+        if self.dict1==1 or self.dict1==0:
+            self.__retrain()
+        else:
+            pass
