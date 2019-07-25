@@ -74,8 +74,10 @@ class RunConfig:
         i=(len(self.__names))
         self.convergeDist=np.zeros(i)
 
+
         self.run_data = RunData()
         self.run_data.set(ensemble_num=ensemble_num)
+
         self.state_json = '{}/mem_{}/state.json'.format(ensemble_dir, self.run_data.get('ensemble_num'))
         # If we're in the middle of a run, 
         #  the BRER checkpoint file and continue from
@@ -410,6 +412,7 @@ class RunConfig:
                     corr_target='{:2f}'.format(corr_target)
                     corr_A  = self.run_data.get('A',name=name)
                     convergeDist[count]=f[0,4]
+                    count=count+1
                     self.convergeDist=convergeDist
                       
                     # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
@@ -428,7 +431,10 @@ class RunConfig:
                         if corr_target in dict['{}'.format(name)]['rejectA'].keys():
                             A=dict.get('{}'.format(name),{}).get('rejectA',{}).get('{}'.format(corr_target))
                             A=np.array(A)
-                            A=np.append(A,corr_A)
+                            if corr_A in A:
+                                pass #do not repeat the value of A
+                            else: 
+                                A=np.append(A,corr_A)
                             dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=A
                             j=json.dumps(dict,cls=NumpyEncoder)
                         else:
@@ -439,7 +445,10 @@ class RunConfig:
                         if corr_target in dict['{}'.format(name)]['acceptA'].keys():
                             A=dict.get('{}'.format(name),{}).get('acceptA',{}).get('{}'.format(corr_target))
                             A=np.array(A)
-                            A=np.append(A,corr_A)
+                            if corr_A in A:
+                                    pass #do not repeat the value of A
+                            else: 
+                                A=np.append(A,corr_A)
                             dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=A
                             j=json.dumps(dict,cls=NumpyEncoder)
                         else:
@@ -504,7 +513,7 @@ class RunConfig:
         phase = self.run_data.get('phase')
         self.__change_directory()
         self.max_sample_count=self.run_data.get('max_train_time')/self.run_data.get('tau')
-        print(self.max_sample_count)
+
         if phase == 'training':
             for name in self.__names:
                 path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'),name)
@@ -513,8 +522,8 @@ class RunConfig:
                 else:
                     retrain=False
 
-            self.__moveDict()
             if retrain ==0:
+                self.__moveDict()
                 self.__train()
                 self.__datDict()
             else: 
