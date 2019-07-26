@@ -28,10 +28,8 @@ class RunConfig:
                  ensemble_dir,
                  dict_json,
                  ensemble_num=1,
-                 max_sample_count=[],
                  pairs_json='pair_data.json',
-                 sample_count=[],
-                 retrain_count=0,
+                 training_converged=[],
                  j=[]
                  ):
         """The run configuration specifies the files and directory structure
@@ -56,9 +54,8 @@ class RunConfig:
         self.tpr = tpr
         self.ens_dir = ensemble_dir
         self.dict_json=dict_json
-        self.retrain_count=0
         self.j=[]
-        self.sample_count=[]
+        self.training_converged=[]
 
         # a list of identifiers of the residue-residue pairs that will be restrained
         self.__names = []
@@ -70,9 +67,6 @@ class RunConfig:
         # file this prevents mixing up pair data amongst the different pairs (i.e.,
         # accidentally applying the restraints for pair 1 to pair 2.)
         self.__names = self.pairs.names
-        i=(len(self.__names))
-        self.convergeDist=np.zeros(i)
-
 
         self.run_data = RunData()
         self.run_data.set(ensemble_num=ensemble_num)
@@ -203,28 +197,7 @@ class RunConfig:
             g.close()     
 
                 
-
-    def __train(self):
-        # do re-sampling
-        targets = self.pairs.re_sample()
-        self._logger.info('New targets: {}'.format(targets))
-        for name in self.__names:
-            self.run_data.set(name=name, target=targets[name])
-
-        # save the new targets to the BRER checkpoint file.
-        self.run_data.save_config(fnm=self.state_json)
-
-
-        # backup existing checkpoint.
-        # TODO: Don't backup the cpt, actually use it!!
-        cpt = '{}/state.cpt'.format(os.getcwd())
-        if os.path.exists(cpt):
-            self._logger.warning(
-                'There is a checkpoint file in your current working directory, but you are '
-                'training. The cpt will be backed up and the run will start over with new targets'
-            )
-            shutil.move(cpt, '{}.bak'.format(cpt))
-
+    def __readDict(self):
         # Checking the dictionary for an acceptable A value for the target, if found, it makes sure that that A value isn't in the rejectA dictionary
         path='{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num'))
         for name in self.__names:
@@ -254,8 +227,30 @@ class RunConfig:
                                 self.run_data.save_config(fnm=self.state_json)
                     else:
                         pass #use the default A-value
-                
- 
+
+    def __train(self):
+        # do re-sampling
+        targets = self.pairs.re_sample()
+        self._logger.info('New targets: {}'.format(targets))
+        for name in self.__names:
+            self.run_data.set(name=name, target=targets[name])
+
+        # save the new targets to the BRER checkpoint file.
+        self.run_data.save_config(fnm=self.state_json)
+
+
+        # backup existing checkpoint.
+        # TODO: Don't backup the cpt, actually use it!!
+        cpt = '{}/state.cpt'.format(os.getcwd())
+        if os.path.exists(cpt):
+            self._logger.warning(
+                'There is a checkpoint file in your current working directory, but you are '
+                'training. The cpt will be backed up and the run will start over with new targets'
+            )
+            shutil.move(cpt, '{}.bak'.format(cpt))
+        
+        self.__readDict()
+
         # Set up a dictionary to go from plugin name -> restraint name
         sites_to_name = {}
 
@@ -292,9 +287,6 @@ class RunConfig:
         corr_target=[]
         count=0
         names=[]
-        if self.retrain_count == 6:
-            self.retrain_count =1
-
         for name in self.__names:
             # Setting to original targets
             corr_target.append(self.run_data.get('target', name=name))
@@ -305,36 +297,7 @@ class RunConfig:
         self._logger.info('Original targets: {}'.format(names))
         self.run_data.save_config(fnm=self.state_json)
 
-        # This reads through the memory from dict.json and determines if A is suitable for the retrain
-        path='{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num'))
-        for name in self.__names:
-            with open(path,'r+') as f:
-                if os.path.getsize(path)==0:
-                    pass #nothing in dictionary
-                else:
-                    dict=json.load(f)
-                    current_target=self.run_data.get('target',name=name)
-                    current_target='{:2f}'.format(current_target)
-
-                    if current_target in dict['{}'.format(name)]['acceptA'].keys():
-                        possible_A=dict.get('{}'.format(name), {}).get('acceptA',{}).get('{}'.format(current_target))
-                        possible_A=np.array(possible_A)
-                        A = np.sort(possible_A, axis=None)
-                        A=np.median(A)
-
-                        if current_target in dict['{}'.format(name)]['rejectA'].keys():
-                            possible_A=dict.get('{}'.format(name), {}).get('rejectA',{}).get('{}'.format(current_target))
-                            A1=np.array(possible_A)
-                            
-                            if A in A1:
-                                A=(self.run_data.get('increase_A'))*A                        
-                                self.run_data.set(A=A,name=name)
-                                self.run_data.save_config(fnm=self.state_json)
-                            else:
-                                self.run_data.set(A=A, name=name)
-                                self.run_data.save_config(fnm=self.state_json)
-                    else:
-                        pass #use the default A-value
+        self.__readDict()
             
         # backup existing checkpoint.
         # TODO: Don't backup the cpt, actually use it!!
@@ -402,23 +365,18 @@ class RunConfig:
                     f=openfile.readlines()[-1]
                     f=f.replace('\t',',')
                     f=np.matrix(f)
-                    corr_target= run_data.get('target',name=name)
+                    corr_target= self.run_data.get('target',name=name)
                     corr_target='{:2f}'.format(corr_target)
                     corr_A  = self.run_data.get('A',name=name)
                     training_converged=f[0,4]
-                    run_data.set(training_converged = training_converged, name=name)
+                    self.run_data.set(training_converged = training_converged, name=name)
                     self.run_data.save_config(fnm=self.state_json)
   
                     # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
-                    self.sample_count=0
                     if training_converged == 0:
-                        self.sample_count=f[0,2]
                         # Reassigning the A-value
                         A=self.run_data.get('A', name=name)
-                        if self.retrain_count==5:
-                            A=2*A
-                        else:
-                            A=(self.run_data.get('increase_A'))*A  
+                        A=(self.run_data.get('increase_A'))*A  
                         self.run_data.set(A=A, name=name)
                         self.run_data.save_config(fnm=self.state_json)
                         
@@ -453,7 +411,12 @@ class RunConfig:
         with open('{}/mem_{}/dict.json'.format(self.ens_dir,self.run_data.get('ensemble_num')), 'w+') as g:
             g.write(self.j)
 
-
+    def __training_converged(self):
+        # checks for convergence during training run
+        self.training_converged=[]
+        for name in self.__names:
+            self.training_converged.append(self.run_data.get('training_converged',name=name))
+    
     def __converge(self):
         self.__move_cpt()
 
@@ -507,33 +470,24 @@ class RunConfig:
         phase = self.run_data.get('phase')
         self.__change_directory()
 
-        if phase == 'training':
-            for name in self.__names:
-                path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'),name)
-                if os.path.exists(path):
-                    retrain=True
-                else:
-                    retrain=False
 
-            if retrain ==0:
-                self.__moveDict()
+        if phase == 'training':
+            self.__moveDict()
+
+            path='{}/mem_{}/{}/training/md.part0001.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'))
+            if os.path.exists(path): #training with original targets
+                self.__datDict()
+                
+            else: #First training with new targets
                 self.__train()
                 self.__datDict()
-            else: 
+            
+            self.__training_converged()
+            while 0 in self.training_converged:
+                self.__retrain()
                 self.__datDict()
-
-            training_converged=[]
-            for name in self.__names():
-                training_converged.append(self.run_data.get('training_converged',name=name))
-            if 0 in training_converged:
-                self.max_sample_count=self.run_data.get('max_train_time')/self.run_data.get('tau')
-                while self.sample_count>self.max_sample_count:
-                    self.retrain_count=self.retrain_count+1
-                    self.__retrain()
-                    self.__datDict() 
-                self.run_data.set(phase='convergence')
-            else:
-                self.run_data.set(phase='convergence') 
+                self.__training_converged() 
+            self.run_data.set(phase='convergence')
 
         elif phase == 'convergence':
             self.__converge()
