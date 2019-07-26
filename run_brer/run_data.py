@@ -58,10 +58,10 @@ class PairParams(MetaData):
 
     def __init__(self, name):
         super().__init__(name)
-        self.set_requirements(['sites', 'logging_filename', 'alpha', 'target','A'])
+        self.set_requirements(['sites', 'logging_filename', 'alpha', 'target','A','training_converged'])
 
     def set_to_defaults(self):
-        self.set(alpha=0., target=3., A=0.2)
+        self.set(alpha=0., target=3., A=0.2, training_converged=0.)
 
     def load_sites(self, sites: list):
         """Loads the atom ids for the restraint. This also sets the logging

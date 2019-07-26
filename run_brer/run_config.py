@@ -393,10 +393,6 @@ class RunConfig:
                 j=json.dumps(dict)
                 self.j=j
 
-
-        self.sample_count=0
-        count=0
-        convergeDist=self.convergeDist
         for name in self.__names: 
             dict=json.loads(self.j)
             path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'), name)   
@@ -405,17 +401,17 @@ class RunConfig:
                     f=openfile.readlines()[-1]
                     f=f.replace('\t',',')
                     f=np.matrix(f)
-                    sample_count=f[0,2]
-                    corr_target= f[0,3]
+                    corr_target= run_data.get('target',name=name)
                     corr_target='{:2f}'.format(corr_target)
                     corr_A  = self.run_data.get('A',name=name)
-                    convergeDist[count]=f[0,4]
-                    self.convergeDist=convergeDist
+                    training_converged=f[0,4]
+                    run_data.set(training_converged = training_converged, name=name)
+                    self.run_data.save_config(fnm=self.state_json)
                       
                     # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
-                    
-                    if sample_count > self.max_sample_count:
-                        self.sample_count=sample_count
+                    self.sample_count=0
+                    if training_converged == 0:
+                        self.sample_count=f[0,2]
                         # Reassigning the A-value
                         A=self.run_data.get('A', name=name)
                         if self.retrain_count==5:
@@ -503,8 +499,7 @@ class RunConfig:
         """
         phase = self.run_data.get('phase')
         self.__change_directory()
-        self.max_sample_count=self.run_data.get('max_train_time')/self.run_data.get('tau')
-        print(self.max_sample_count)
+
         if phase == 'training':
             for name in self.__names:
                 path='{}/mem_{}/{}/training/{}.log'.format(self.ens_dir,self.run_data.get('ensemble_num'),self.run_data.get('iteration'),name)
@@ -520,32 +515,22 @@ class RunConfig:
             else: 
                 self.__datDict()
 
-            if self.sample_count>self.max_sample_count:
+            training_converged=[]
+            for name in self.__names():
+                training_converged.append[self.run_data.get('training_converged',name=name)]
+            if 0 in training_converged:
+                self.max_sample_count=self.run_data.get('max_train_time')/self.run_data.get('tau')
                 while self.sample_count>self.max_sample_count:
                     self.retrain_count=self.retrain_count+1
                     self.__retrain()
-                    self.__datDict()
-                self.run_data.set(phase='convergence') 
-            
-            elif 0 in self.convergeDist:
-                self.retrain_count=self.retrain_count+1
-                self.__retrain()
-                self.__datDict()
-                if self.sample_count>self.max_sample_count:
-                    while self.sample_count>self.max_sample_count:
-                        self.retrain_count=self.retrain_count+1
-                        self.__retrain()
-                        self.__datDict()
-                    self.run_data.set(phase='convergence')
-                else:
-                    self.run_data.set(phase='convergence')
-            else:
+                    self.__datDict() 
                 self.run_data.set(phase='convergence')
-            
+            else:
+                self.run_data.set(phase='convergence') 
+
         elif phase == 'convergence':
             self.__converge()
             self.run_data.set(phase='production')
-        
         else:
             self.__production()
             self.run_data.set(phase='training', start_time=0, iteration=(self.run_data.get('iteration') + 1))
