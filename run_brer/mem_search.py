@@ -2,6 +2,7 @@
 #!/usr/bin/env python3
 from run_brer.run_data import RunData
 from run_brer.pair_data import MultiPair
+from read_xvg import read_xvg
 import os
 import json 
 import numpy as np 
@@ -97,17 +98,20 @@ class Analysis:
         # this removes the unnecessary gromacs header in the .xvg file and writes just the data portion to dist.log
         path="{}".format(self.analysis_dir)
         os.chdir(path)
-        with open("distance.xvg","r+") as f:
-            data=f.read().splitlines(True)
-        with open("dist.log","w") as fout:
-            fout.writelines(data[17:])
-        with open("dist.log","r+") as g:
-            data=g.read()
-            data=data.replace('\n',';')
-            data=data.replace(' ',',')
-            data=data.strip(',;')
-        distance_values = np.matrix(data)
-        self.distance_values=distance_values
+        self.distance_values=read_xvg(list('distance.xvg'))
+        print(self.distance_values.shape)
+        print(self.distance_values)
+        # with open("distance.xvg","r+") as f:
+        #     data=f.read().splitlines(True)
+        # with open("dist.log","w") as fout:
+        #     fout.writelines(data[17:])
+        # with open("dist.log","r+") as g:
+        #     data=g.read()
+        #     data=data.replace('\n',';')
+        #     data=data.replace(' ',',')
+        #     data=data.strip(',;')
+        # distance_values = np.matrix(data)
+        # self.distance_values=distance_values
         os.remove("distance.xvg")
         os.remove("trjcat.xtc")
     
@@ -142,18 +146,14 @@ class Analysis:
         i=2
         j=0
         for name in self.__names:
-            m=m+1
             alpha=data[0,i]
             target=data[0,j]
             force_constant=alpha/target #(kJ/mol)/nm
+            m=m+1
             i=i+3
-            j=j+3
-            W_DEER=0
-            for k in range (0,n):
-                delta_R=np.sum(np.abs(distance_values[k+1,m]-distance_values[k,m]))
-                W_DEER =W_DEER+Sum
-            W_DEER=force_constant*W_DEER
-            work[name] =W_DEER
+            j=j+3   
+            delta_R=np.sum(np.abs(distance_values[1:,m]-distance_values[:-1,m]))
+            work[name] =force_constant*W_DEER
 
         #Calculating boltzmann
         z=np.sum(list(work.values()))

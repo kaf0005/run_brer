@@ -68,7 +68,7 @@ class TrainingPluginConfig(PluginConfig):
     def __init__(self):
         super().__init__()
         self.name = 'training'
-        self.set_requirements(['sites', 'target', 'A', 'tau', 'tolerance', 'num_samples', 'logging_filename'])
+        self.set_requirements(['sites', 'target', 'A', 'tau','max_train_time', 'tolerance', 'num_samples', 'logging_filename'])
 
     def build_plugin(self):
         """Builds training phase plugin for BRER simulations.

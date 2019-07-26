@@ -16,7 +16,7 @@ class GeneralParams(MetaData):
         super().__init__('general')
         self.set_requirements([
             'ensemble_num', 'iteration', 'phase', 'start_time','tau',
-            'tolerance', 'num_samples', 'sample_period', 'production_time'
+            'tolerance', 'num_samples', 'sample_period', 'production_time','max_train_time','increase_A'
         ])
 
     def set_to_defaults(self):
@@ -31,6 +31,8 @@ class GeneralParams(MetaData):
             'tolerance': 0.25,
             'num_samples': 50,
             'sample_period': 100,
+            'max_train_time': 20000, #20ns
+            'increase_A':1.1, #percent
             'production_time': 10000  # 10 ns
         })
 
@@ -45,6 +47,8 @@ class GeneralParams(MetaData):
             'tolerance': 0.25,
             'num_samples': 50,
             'sample_period': 100,
+            'max_train_time':20000, #20ns
+            'increase_A':1.1, #increases A by 10%
             'production_time': 10000  # 10 ns
         }
 
@@ -54,10 +58,10 @@ class PairParams(MetaData):
 
     def __init__(self, name):
         super().__init__(name)
-        self.set_requirements(['sites', 'logging_filename', 'alpha', 'target','A'])
+        self.set_requirements(['sites', 'logging_filename', 'alpha', 'target','A','training_converged'])
 
     def set_to_defaults(self):
-        self.set(alpha=0., target=3., A=0.2)
+        self.set(alpha=0., target=3., A=0.2, training_converged=0.)
 
     def load_sites(self, sites: list):
         """Loads the atom ids for the restraint. This also sets the logging
@@ -112,6 +116,7 @@ class RunData:
             if not name:
                 if key in self.general_params.get_requirements():
                     self.general_params.set(key, value)
+                    
                 else:
                     raise ValueError('You have provided a name; this means you are probably trying to set a '
                                      'pair-specific parameter. {} is not pair-specific'.format(key))
