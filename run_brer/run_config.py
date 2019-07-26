@@ -524,7 +524,7 @@ class RunConfig:
 
             training_converged=[]
             for name in self.__names():
-                training_converged.append[self.run_data.get('training_converged',name=name)]
+                training_converged.append(self.run_data.get('training_converged',name=name))
             if 0 in training_converged:
                 self.max_sample_count=self.run_data.get('max_train_time')/self.run_data.get('tau')
                 while self.sample_count>self.max_sample_count:
