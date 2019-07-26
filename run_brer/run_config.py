@@ -499,8 +499,9 @@ class RunConfig:
             self._logger.info("Plugin {}: alpha = {}, target = {}".format(name, current_alpha, current_target))
 
     def run(self):
-        self.__moveDict
+        self.__moveDict()
         self.__retrain()
+        self.__datDict()
         # """Perform the MD simulations.
         # """
         # phase = self.run_data.get('phase')
