@@ -29,7 +29,6 @@ class RunConfig:
                  dict_json,
                  ensemble_num=1,
                  max_sample_count=[],
-                 convergeDist=[],
                  pairs_json='pair_data.json',
                  sample_count=[],
                  retrain_count=0,
@@ -74,8 +73,10 @@ class RunConfig:
         i=(len(self.__names))
         self.convergeDist=np.zeros(i)
 
+
         self.run_data = RunData()
         self.run_data.set(ensemble_num=ensemble_num)
+
         self.state_json = '{}/mem_{}/state.json'.format(ensemble_dir, self.run_data.get('ensemble_num'))
         # If we're in the middle of a run, 
         #  the BRER checkpoint file and continue from
@@ -407,7 +408,7 @@ class RunConfig:
                     training_converged=f[0,4]
                     run_data.set(training_converged = training_converged, name=name)
                     self.run_data.save_config(fnm=self.state_json)
-                      
+  
                     # Resets the A value if the training did not converge within 20ns, these values are saved in the dictionary 
                     self.sample_count=0
                     if training_converged == 0:
@@ -424,7 +425,10 @@ class RunConfig:
                         if corr_target in dict['{}'.format(name)]['rejectA'].keys():
                             A=dict.get('{}'.format(name),{}).get('rejectA',{}).get('{}'.format(corr_target))
                             A=np.array(A)
-                            A=np.append(A,corr_A)
+                            if corr_A in A:
+                                pass #do not repeat the value of A
+                            else: 
+                                A=np.append(A,corr_A)
                             dict['{}'.format(name)]['rejectA']['{}'.format(corr_target)]=A
                             j=json.dumps(dict,cls=NumpyEncoder)
                         else:
@@ -435,7 +439,10 @@ class RunConfig:
                         if corr_target in dict['{}'.format(name)]['acceptA'].keys():
                             A=dict.get('{}'.format(name),{}).get('acceptA',{}).get('{}'.format(corr_target))
                             A=np.array(A)
-                            A=np.append(A,corr_A)
+                            if corr_A in A:
+                                    pass #do not repeat the value of A
+                            else: 
+                                A=np.append(A,corr_A)
                             dict['{}'.format(name)]['acceptA']['{}'.format(corr_target)]=A
                             j=json.dumps(dict,cls=NumpyEncoder)
                         else:
@@ -508,8 +515,8 @@ class RunConfig:
                 else:
                     retrain=False
 
-            self.__moveDict()
             if retrain ==0:
+                self.__moveDict()
                 self.__train()
                 self.__datDict()
             else: 
