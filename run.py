@@ -15,8 +15,8 @@ init = {
 }
 
 config = rc.RunConfig(**init)
-config.run_data.set(max_train_time=50,tau=50)
+config.run_data.set(max_train_time=10,tau=10)
 for name in config.pairs.names:
-    config.run_data.set(A=100,name=name)
+    config.run_data.set(A=200,name=name)
 config.run()
 
